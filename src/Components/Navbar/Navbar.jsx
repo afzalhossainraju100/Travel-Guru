@@ -6,13 +6,20 @@ const Navbar = () => {
   const Links = (
     <>
       <li>
-        <NavLink to="/">Home</NavLink>
+        <NavLink to="/"
+        className={({isActive})=>{
+          return isActive? "text-blue-500 underline hover:text-blue-700":"";
+        }}>Home</NavLink>
       </li>
       <li>
-        <NavLink to="/login">Login</NavLink>
+        <NavLink to="/login" className={({ isActive }) => {
+          return isActive ? "text-blue-500 underline hover:text-blue-700" : "";
+        }}>Login</NavLink>
       </li>
       <li>
-        <NavLink to="/register">Signup</NavLink>
+        <NavLink to="/register" className={({isActive})=>{
+          return isActive ? "text-blue-500 underline hover:text-blue-700": "";
+        }}>Signup</NavLink>
       </li>
     </>
   );
