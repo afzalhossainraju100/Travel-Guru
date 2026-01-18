@@ -1,10 +1,10 @@
-import React, { use } from "react";
+import React, { useContext } from "react";
 import { Link } from "react-router-dom";
 import AuthContext from "../../Contextx/AuthContext/AuthContext";
 
-
 const Login = () => {
-  const { signInUser } = use(AuthContext);
+  const authInfo = useContext(AuthContext);
+  const { signInUser } = authInfo || {};
   const handleLogin = (e) => {
     e.preventDefault();
     const email = e.target.email.value;
@@ -36,9 +36,12 @@ const Login = () => {
             <form action="" onSubmit={handleLogin}>
               <fieldset className="fieldset">
                 <label className="label">Email</label>
-                <input type="email" 
-                name="email"
-                className="input" placeholder="Email" />
+                <input
+                  type="email"
+                  name="email"
+                  className="input"
+                  placeholder="Email"
+                />
                 <label className="label">Password</label>
                 <input
                   type="password"
@@ -52,7 +55,15 @@ const Login = () => {
                 <button className="btn btn-neutral mt-4">Login</button>
               </fieldset>
             </form>
-            <p>Don't have an account? <Link to="/register" className='text-blue-500 underline hover:text-blue-700'>Register</Link></p>
+            <p>
+              Don't have an account?{" "}
+              <Link
+                to="/register"
+                className="text-blue-500 underline hover:text-blue-700"
+              >
+                Register
+              </Link>
+            </p>
           </div>
         </div>
       </div>

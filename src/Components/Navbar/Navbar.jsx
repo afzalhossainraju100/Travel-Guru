@@ -33,6 +33,12 @@ const Navbar = () => {
           return isActive ? "text-blue-500 underline hover:text-blue-700": "";
         }}>Signup</NavLink>
       </li>
+      <li>
+        <NavLink to={user?"/yourneed":"/login"} className={({isActive})=>{
+          return isActive ? "text-blue-500 underline hover:text-blue-700": "";
+        }}>Your Need</NavLink>
+      </li>
+
       {
         user && <>
         <li><NavLink to='/orders'>Orders</NavLink></li>

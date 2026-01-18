@@ -8,15 +8,19 @@ import { useState } from "react";
 import { signOut } from "firebase/auth";
 
 
+
 const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
+    const [loading, setLoading] = useState(true);
   const createUser = (email, password) => {
+    setLoading(true);
     return createUserWithEmailAndPassword(auth, email, password);
   };
   const signInUser = (email, password) => {
     return signInWithEmailAndPassword(auth, email, password);
   };
   const signOutUser = ()=>{
+    setLoading(true);
     return signOut(auth);
   }
   //get current user info
@@ -24,7 +28,8 @@ const AuthProvider = ({ children }) => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       console.log("Auth state changed:", currentUser);
       setUser(currentUser);
-    })
+      setLoading(false);
+    });
     return ()=>{
         unsubscribe();
     }
@@ -35,6 +40,7 @@ const AuthProvider = ({ children }) => {
     createUser,
     signInUser,
     signOutUser,
+    loading,
   };
   return (
     <AuthContext.Provider value={authInfo}>{children}</AuthContext.Provider>
