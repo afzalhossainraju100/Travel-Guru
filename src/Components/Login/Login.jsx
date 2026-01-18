@@ -1,7 +1,25 @@
-import React from "react";
+import React, { use } from "react";
 import { Link } from "react-router-dom";
+import AuthContext from "../../Contextx/AuthContext/AuthContext";
+
 
 const Login = () => {
+  const { signInUser } = use(AuthContext);
+  const handleLogin = (e) => {
+    e.preventDefault();
+    const email = e.target.email.value;
+    const password = e.target.password.value;
+
+    signInUser(email, password)
+      .then((result) => {
+        const user = result.user;
+        console.log(user);
+        e.target.reset();
+      })
+      .catch((error) => {
+        alert(error.message);
+      });
+  };
   return (
     <div className="hero bg-base-200 min-h-screen">
       <div className="hero-content flex-col lg:flex-row-reverse">
@@ -15,13 +33,16 @@ const Login = () => {
         </div>
         <div className="card bg-base-100 w-full max-w-sm shrink-0 shadow-2xl">
           <div className="card-body">
-            <form action="">
+            <form action="" onSubmit={handleLogin}>
               <fieldset className="fieldset">
                 <label className="label">Email</label>
-                <input type="email" className="input" placeholder="Email" />
+                <input type="email" 
+                name="email"
+                className="input" placeholder="Email" />
                 <label className="label">Password</label>
                 <input
                   type="password"
+                  name="password"
                   className="input"
                   placeholder="Password"
                 />

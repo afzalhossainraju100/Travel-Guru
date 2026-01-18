@@ -2,10 +2,19 @@ import React, { use } from "react";
 import Home from "../Home/Home";
 import { NavLink } from "react-router-dom";
 import AuthContext from "../../Contextx/AuthContext/AuthContext";
+import { Link } from "react-router-dom";
 
 const Navbar = () => {
-  const authInfo = use(AuthContext);
-  console.log(authInfo);
+  const {user, signOutUser} = use(AuthContext);
+  const handleSignOut = ()=>{
+    signOutUser()
+    .then(()=>{
+      //sign-out successful
+    })
+    .catch((error)=>{
+      console.error("Error signing out:", error);
+    });
+  }
   const Links = (
     <>
       <li>
@@ -24,6 +33,13 @@ const Navbar = () => {
           return isActive ? "text-blue-500 underline hover:text-blue-700": "";
         }}>Signup</NavLink>
       </li>
+      {
+        user && <>
+        <li><NavLink to='/orders'>Orders</NavLink></li>
+        <li><NavLink to='/profile'>Profile</NavLink></li>
+
+        </>
+      }
     </>
   );
   return (
@@ -60,7 +76,10 @@ const Navbar = () => {
         <ul className="menu menu-horizontal px-1 gap-6">{Links}</ul>
       </div>
       <div className="navbar-end">
-        <a className="btn">Button</a>
+        
+        {
+          user? <a className="btn" onClick={handleSignOut}>Sign Out</a>: <Link to="/login">Login</Link>
+        }
       </div>
     </div>
   );
