@@ -13,14 +13,14 @@ const Home = () => {
     { id: 3, name: "SUNDARBANS", image: Sundorbon },
   ];
 
-  // const scrollCards = (direction) => {
-  //   if (!cardRowRef.current) return;
+  const scrollCards = (direction) => {
+    if (!cardRowRef.current) return;
 
-  //   cardRowRef.current.scrollBy({
-  //     left: direction === "next" ? 320 : -320,
-  //     behavior: "smooth",
-  //   });
-  // };
+    cardRowRef.current.scrollBy({
+      left: direction === "next" ? 320 : -320,
+      behavior: "smooth",
+    });
+  };
 
   return (
     <div
@@ -32,7 +32,7 @@ const Home = () => {
           <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold leading-tight tracking-wide drop-shadow-lg">
             Enjoy Your Vacations With <br></br>Travel Guru
           </h1>
-          <button className="bg-[#F9A51A] hover:bg-blue-700 text-[#000000] font-bold py-2 px-6 rounded mt-4 flex items-center gap-2">
+          <button className="bg-[#F9A51A] hover:bg-yellow-500 text-[#000000] font-bold py-2 px-6 rounded mt-4 flex items-center gap-2">
             Get Started →
           </button>
         </div>
