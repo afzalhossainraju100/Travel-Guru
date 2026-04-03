@@ -31,3 +31,17 @@ export const saveBookingForUser = (userIdentifier, packageData) => {
     JSON.stringify([bookingItem, ...currentBookings]),
   );
 };
+
+export const removeBookingForUser = (userIdentifier, bookingId) => {
+  if (!userIdentifier || !bookingId) return;
+
+  const currentBookings = getBookingsByUser(userIdentifier);
+  const nextBookings = currentBookings.filter(
+    (item) => item.bookingId !== bookingId,
+  );
+
+  localStorage.setItem(
+    getBookingKey(userIdentifier),
+    JSON.stringify(nextBookings),
+  );
+};
