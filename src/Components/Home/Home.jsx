@@ -1,10 +1,14 @@
-import React, { useRef } from "react";
+import React, { useContext, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import HomeBg from "../../assets/images/Rectangle1.png";
 import Sajek from "../../assets/images/Sajek.png";
 import Sreemongol from "../../assets/images/Sreemongol.png";
 import Sundorbon from "../../assets/images/sundorbon.png";
+import AuthContext from "../../Contextx/AuthContext/AuthContext";
 
 const Home = () => {
+  const { user } = useContext(AuthContext) || {};
+  const navigate = useNavigate();
   const cardRowRef = useRef(null);
 
   const destinations = [
@@ -22,6 +26,17 @@ const Home = () => {
     });
   };
 
+  const handleGetStarted = () => {
+    if (user) {
+      navigate("/packages");
+      return;
+    }
+
+    navigate("/login", {
+      state: { from: { pathname: "/packages" } },
+    });
+  };
+
   return (
     <div
       className="min-h-screen bg-cover bg-center bg-no-repeat flex items-center"
@@ -32,7 +47,10 @@ const Home = () => {
           <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold leading-tight tracking-wide drop-shadow-lg">
             Enjoy Your Vacations With <br></br>Travel Guru
           </h1>
-          <button className="bg-[#F9A51A] hover:bg-yellow-500 text-[#000000] font-bold py-2 px-6 rounded mt-4 flex items-center gap-2">
+          <button
+            onClick={handleGetStarted}
+            className="bg-[#F9A51A] hover:bg-yellow-500 text-[#000000] font-bold py-2 px-6 rounded mt-4 flex items-center gap-2"
+          >
             Get Started →
           </button>
         </div>

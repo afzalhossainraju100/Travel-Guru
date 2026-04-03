@@ -11,7 +11,8 @@ import AuthProvider from "./Contextx/AuthContext/AuthProvider.jsx";
 import Orders from "./Components/Orders/Orders.jsx";
 import Profile from "./Components/Profile/Profile.jsx";
 import PrivateRoutes from "./Routes/PrivateRoutes.jsx";
-import YourNeed from "./Components/yourNeed/YourNeed.jsx";
+import Packages from "./Components/Packages/Packages.jsx";
+import PackageDetails from "./Components/PackageDetails/PackageDetails.jsx";
 
 const router = createBrowserRouter([
   {
@@ -48,9 +49,21 @@ const router = createBrowserRouter([
         ),
       },
       {
-        path:'/yourneed',
-        element: <PrivateRoutes><YourNeed /></PrivateRoutes>,
-      }
+        path: "/packages",
+        element: (
+          <PrivateRoutes>
+            <Packages />
+          </PrivateRoutes>
+        ),
+      },
+      {
+        path: "/packages/:id",
+        Component: () => (
+          <PrivateRoutes>
+            <PackageDetails />
+          </PrivateRoutes>
+        ),
+      },
     ],
   },
 ]);
