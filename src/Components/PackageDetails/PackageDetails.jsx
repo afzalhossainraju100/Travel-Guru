@@ -1,12 +1,24 @@
-import React, { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import React, { useContext, useEffect, useState } from "react";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { getPackageById } from "../../services/packagesService";
+import { saveCheckoutDraft } from "../../services/checkoutService";
+import {
+  addWishlistForUser,
+  isPackageWishlisted,
+  removeWishlistForUser,
+} from "../../services/wishlistService";
+import AuthContext from "../../Contextx/AuthContext/AuthContext";
 
 const PackageDetails = () => {
   const { id } = useParams();
+  const { user } = useContext(AuthContext) || {};
+  const navigate = useNavigate();
   const [selectedPackage, setSelectedPackage] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [bookingMessage, setBookingMessage] = useState("");
+  const [wishlistMessage, setWishlistMessage] = useState("");
+  const [isWishlisted, setIsWishlisted] = useState(false);
 
   useEffect(() => {
     const loadPackage = async () => {
@@ -24,11 +36,55 @@ const PackageDetails = () => {
     loadPackage();
   }, [id]);
 
+  useEffect(() => {
+    const userIdentifier = user?.uid || user?.email;
+    setIsWishlisted(isPackageWishlisted(userIdentifier, id));
+  }, [id, user]);
+
   const bdtFormatter = new Intl.NumberFormat("en-BD", {
     style: "currency",
     currency: "BDT",
     maximumFractionDigits: 0,
   });
+
+  const handleBookNow = () => {
+    const userIdentifier = user?.uid || user?.email;
+
+    if (!userIdentifier || !selectedPackage) {
+      setBookingMessage(
+        "Unable to save booking right now. Please login again.",
+      );
+      return;
+    }
+
+    saveCheckoutDraft(userIdentifier, {
+      package: selectedPackage,
+      travelers: 1,
+    });
+    navigate(`/ledger/${selectedPackage.id}`, {
+      state: { package: selectedPackage, travelers: 1 },
+    });
+  };
+
+  const handleWishlist = () => {
+    const userIdentifier = user?.uid || user?.email;
+
+    if (!userIdentifier || !selectedPackage) {
+      setWishlistMessage("Please login to save this package for future tours.");
+      return;
+    }
+
+    if (isWishlisted) {
+      removeWishlistForUser(userIdentifier, selectedPackage.id);
+      setIsWishlisted(false);
+      setWishlistMessage("Removed from your wishlist.");
+      return;
+    }
+
+    addWishlistForUser(userIdentifier, selectedPackage);
+    setIsWishlisted(true);
+    setWishlistMessage("Added to your wishlist for future tours.");
+  };
 
   if (loading) {
     return (
@@ -123,9 +179,28 @@ const PackageDetails = () => {
           </div>
 
           <div className="mt-8 flex gap-3">
-            <button className="rounded-lg bg-emerald-600 px-5 py-2.5 font-semibold text-white hover:bg-emerald-700">
+            <button
+              onClick={handleWishlist}
+              className={`rounded-lg border px-5 py-2.5 font-semibold transition ${
+                isWishlisted
+                  ? "border-rose-300 bg-rose-50 text-rose-700 hover:bg-rose-100"
+                  : "border-rose-300 bg-white text-rose-600 hover:bg-rose-50"
+              }`}
+            >
+              {isWishlisted ? "Remove Wish" : "Add to Wish"}
+            </button>
+            <button
+              onClick={handleBookNow}
+              className="rounded-lg bg-emerald-600 px-5 py-2.5 font-semibold text-white hover:bg-emerald-700"
+            >
               Book Now
             </button>
+            <Link
+              to="/booking"
+              className="rounded-lg border border-emerald-300 px-5 py-2.5 font-semibold text-emerald-700 hover:bg-emerald-50"
+            >
+              Go to Booking
+            </Link>
             <Link
               to="/packages"
               className="rounded-lg border border-slate-300 px-5 py-2.5 font-semibold text-slate-700 hover:bg-slate-100"
@@ -133,6 +208,16 @@ const PackageDetails = () => {
               Back to Packages
             </Link>
           </div>
+
+          {bookingMessage && (
+            <p className="mt-4 font-medium text-emerald-700">
+              {bookingMessage}
+            </p>
+          )}
+
+          {wishlistMessage && (
+            <p className="mt-2 font-medium text-rose-700">{wishlistMessage}</p>
+          )}
         </div>
       </div>
     </div>

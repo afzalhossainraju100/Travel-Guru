@@ -1,7 +1,9 @@
-import React from "react";
+import React, { useContext } from "react";
+import AuthContext from "../../Contextx/AuthContext/AuthContext";
 import logo from "../../assets/images/logo.png";
 
 const Footer = () => {
+  const { user } = useContext(AuthContext) || {};
   const currentYear = new Date().getFullYear();
 
   return (
@@ -52,16 +54,20 @@ const Footer = () => {
                 All Packages
               </a>
             </li>
-            <li>
-              <a href="/login" className="transition hover:text-cyan-800">
-                Login
-              </a>
-            </li>
-            <li>
-              <a href="/register" className="transition hover:text-cyan-800">
-                Register
-              </a>
-            </li>
+            {!user && (
+              <li>
+                <a href="/login" className="transition hover:text-cyan-800">
+                  Login
+                </a>
+              </li>
+            )}
+            {!user && (
+              <li>
+                <a href="/register" className="transition hover:text-cyan-800">
+                  Register
+                </a>
+              </li>
+            )}
           </ul>
         </div>
 
@@ -69,8 +75,8 @@ const Footer = () => {
           <h3 className="mb-4 text-lg font-bold text-slate-800">Contact</h3>
           <ul className="space-y-2 text-slate-600">
             <li>Dhaka, Bangladesh</li>
-            <li>+880 17XX-XXXXXX</li>
-            <li>hello@travelguru.bd</li>
+            <li>+880 1516503901</li>
+            <li>rmn@travelguru.bd</li>
           </ul>
 
           <div className="mt-5 rounded-xl border border-cyan-100 bg-white/70 p-3">

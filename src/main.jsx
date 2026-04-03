@@ -8,11 +8,13 @@ import Home from "./Components/Home/Home.jsx";
 import Login from "./Components/Login/Login.jsx";
 import Register from "./Components/Register/Register.jsx";
 import AuthProvider from "./Contextx/AuthContext/AuthProvider.jsx";
-import Orders from "./Components/Orders/Orders.jsx";
+import Booking from "./Components/Booking/Booking.jsx";
 import Profile from "./Components/Profile/Profile.jsx";
 import PrivateRoutes from "./Routes/PrivateRoutes.jsx";
 import Packages from "./Components/Packages/Packages.jsx";
 import PackageDetails from "./Components/PackageDetails/PackageDetails.jsx";
+import Ledger from "./Components/Ledger/Ledger.jsx";
+import Payment from "./Components/Payment/Payment.jsx";
 
 const router = createBrowserRouter([
   {
@@ -33,10 +35,26 @@ const router = createBrowserRouter([
         Component: Register,
       },
       {
-        path: "/orders",
+        path: "/booking",
         Component: () => (
           <PrivateRoutes>
-            <Orders />
+            <Booking />
+          </PrivateRoutes>
+        ),
+      },
+      {
+        path: "/ledger/:id",
+        Component: () => (
+          <PrivateRoutes>
+            <Ledger />
+          </PrivateRoutes>
+        ),
+      },
+      {
+        path: "/payment",
+        Component: () => (
+          <PrivateRoutes>
+            <Payment />
           </PrivateRoutes>
         ),
       },

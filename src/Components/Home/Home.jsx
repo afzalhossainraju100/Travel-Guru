@@ -39,30 +39,41 @@ const Home = () => {
 
   return (
     <div
-      className="min-h-screen bg-cover bg-center bg-no-repeat flex items-center"
+      className="relative min-h-screen bg-cover bg-center bg-no-repeat px-4 py-6 sm:px-6 sm:py-8 lg:px-12"
       style={{ backgroundImage: `url(${HomeBg})` }}
     >
-      <div className="flex w-full items-start justify-between gap-8 px-4 md:px-8 lg:px-12">
-        <div className="w-[90%] md:w-[80%] lg:w-[70%] mx-auto text-white bg-black/45 backdrop-blur-[1px] rounded-2xl p-6 md:p-10 shadow-2xl border border-white/20">
-          <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold leading-tight tracking-wide drop-shadow-lg">
-            Enjoy Your Vacations With <br></br>Travel Guru
+      <div className="absolute inset-0 bg-gradient-to-b from-black/55 via-black/35 to-black/55" />
+
+      <div className="relative mx-auto flex w-full max-w-7xl flex-col items-center gap-8 lg:flex-row lg:items-stretch lg:gap-12">
+        <div className="w-full rounded-3xl border border-white/20 bg-black/45 p-6 text-center text-white shadow-2xl backdrop-blur-md sm:p-8 md:p-10 lg:w-[42%] lg:text-left">
+          <p className="mb-4 text-xs font-semibold uppercase tracking-[0.35em] text-[#F9A51A] sm:text-sm">
+            Explore Bangladesh
+          </p>
+          <h1 className="text-3xl font-bold leading-tight tracking-wide drop-shadow-lg sm:text-4xl md:text-5xl lg:text-6xl">
+            Enjoy Your Vacations With <br />
+            Travel Guru
           </h1>
+          <p className="mx-auto mt-4 max-w-xl text-sm leading-6 text-white/80 sm:text-base lg:mx-0">
+            Discover curated destinations, plan quickly, and start your trip
+            with a smoother booking experience.
+          </p>
           <button
             onClick={handleGetStarted}
-            className="bg-[#F9A51A] hover:bg-yellow-500 text-[#000000] font-bold py-2 px-6 rounded mt-4 flex items-center gap-2"
+            className="mt-6 inline-flex items-center justify-center gap-2 rounded-full bg-[#F9A51A] px-6 py-3 font-bold text-black transition duration-300 hover:bg-yellow-500 hover:shadow-lg hover:shadow-[#F9A51A]/20 active:scale-[0.98]"
           >
             Get Started →
           </button>
         </div>
-        <div className="w-full lg:w-[56%]">
+
+        <div className="w-full lg:w-[58%]">
           <div
             ref={cardRowRef}
-            className="flex gap-4 overflow-x-auto pb-3 pr-2 scroll-smooth"
+            className="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-4 pr-1 scroll-smooth sm:gap-5 lg:gap-6"
           >
             {destinations.map((destination, index) => (
               <div
                 key={destination.id}
-                className={`relative h-82.5 w-45 md:w-52.5 lg:w-57.5 shrink-0 overflow-hidden rounded-3xl border-2 shadow-2xl cursor-pointer transition-all duration-300 hover:border-[#F9A51A] ${
+                className={`relative h-[280px] w-[220px] shrink-0 snap-center overflow-hidden rounded-3xl border-2 shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:border-[#F9A51A] sm:h-[320px] sm:w-[240px] md:h-[350px] md:w-[260px] lg:h-[380px] lg:w-[275px] ${
                   index === 0 ? "" : "border-transparent"
                 }`}
               >
@@ -71,25 +82,25 @@ const Home = () => {
                   alt={destination.name}
                   className="h-full w-full object-cover"
                 />
-                <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/20 to-transparent" />
-                <h3 className="absolute bottom-4 left-4 right-4 text-white bebas-neue-regular text-2xl tracking-wide drop-shadow-lg">
+                <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent" />
+                <h3 className="absolute bottom-4 left-4 right-4 text-white bebas-neue-regular text-2xl tracking-wide drop-shadow-lg sm:text-3xl">
                   {destination.name}
                 </h3>
               </div>
             ))}
           </div>
 
-          <div className="mt-8 flex items-center justify-center gap-3 lg:justify-start">
+          <div className="mt-6 flex items-center justify-center gap-3 lg:justify-start">
             <button
               onClick={() => scrollCards("prev")}
-              className="grid h-8 w-8 place-items-center rounded-full bg-white text-black shadow-md transition hover:bg-gray-200"
+              className="grid h-10 w-10 place-items-center rounded-full bg-white/90 text-black shadow-md transition hover:bg-white hover:shadow-lg"
               aria-label="Scroll left"
             >
               ❮
             </button>
             <button
               onClick={() => scrollCards("next")}
-              className="grid h-8 w-8 place-items-center rounded-full bg-white text-black shadow-md transition hover:bg-gray-200"
+              className="grid h-10 w-10 place-items-center rounded-full bg-white/90 text-black shadow-md transition hover:bg-white hover:shadow-lg"
               aria-label="Scroll right"
             >
               ❯
