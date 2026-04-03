@@ -60,14 +60,14 @@ const Register = () => {
                 <input
                   name="email"
                   type="email"
-                  className="input input-bordered bg-white/95"
+                  className="input input-bordered bg-white/95 text-black"
                   placeholder="Email"
                 />
                 <label className="label text-slate-700">Password</label>
                 <input
                   name="password"
                   type="password"
-                  className="input input-bordered bg-white/95"
+                  className="input input-bordered bg-white/95 text-black"
                   placeholder="Password"
                 />
                 <div>

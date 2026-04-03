@@ -50,14 +50,14 @@ const Login = () => {
                 <input
                   type="email"
                   name="email"
-                  className="input input-bordered bg-white/95"
+                  className="input input-bordered bg-white/95 text-black"
                   placeholder="Email"
                 />
                 <label className="label text-slate-700">Password</label>
                 <input
                   type="password"
                   name="password"
-                  className="input input-bordered bg-white/95"
+                  className="input input-bordered bg-white/95 text-black"
                   placeholder="Password"
                 />
                 <div>
