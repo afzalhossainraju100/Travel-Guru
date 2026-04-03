@@ -90,6 +90,15 @@ const Navbar = () => {
           </li>
           <li>
             <NavLink
+              to="/blog"
+              onClick={() => setMenuOpen(false)}
+              className="text-black transition-colors hover:text-cyan-950"
+            >
+              Blog
+            </NavLink>
+          </li>
+                    <li>
+            <NavLink
               to="/profile"
               onClick={() => setMenuOpen(false)}
               className="text-black transition-colors hover:text-cyan-950"

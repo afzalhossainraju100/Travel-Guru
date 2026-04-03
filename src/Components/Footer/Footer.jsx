@@ -102,7 +102,7 @@ const Footer = () => {
         </p>
         <div className="flex items-center justify-center gap-4">
           <a
-            href="#"
+            href="https://www.facebook.com/mmafzal.raju"
             aria-label="Facebook"
             className="grid h-10 w-10 place-items-center rounded-full border border-cyan-200 bg-white/90 text-cyan-800 shadow-sm transition hover:bg-cyan-50 hover:text-cyan-900"
           >
@@ -116,7 +116,7 @@ const Footer = () => {
             </svg>
           </a>
           <a
-            href="#"
+            href="https://www.instagram.com/m.m.a.h.raju/"
             aria-label="Instagram"
             className="grid h-10 w-10 place-items-center rounded-full border border-cyan-200 bg-white/90 text-cyan-800 shadow-sm transition hover:bg-cyan-50 hover:text-cyan-900"
           >
@@ -140,7 +140,7 @@ const Footer = () => {
             </svg>
           </a>
           <a
-            href="#"
+            href="https://www.youtube.com/@afzalhossainraju"
             aria-label="YouTube"
             className="grid h-10 w-10 place-items-center rounded-full border border-cyan-200 bg-white/90 text-cyan-800 shadow-sm transition hover:bg-cyan-50 hover:text-cyan-900"
           >
@@ -154,7 +154,7 @@ const Footer = () => {
             </svg>
           </a>
           <a
-            href="#"
+            href="https://www.linkedin.com/in/afzal-hossain-raju/"
             aria-label="LinkedIn"
             className="grid h-10 w-10 place-items-center rounded-full border border-cyan-200 bg-white/90 text-cyan-800 shadow-sm transition hover:bg-cyan-50 hover:text-cyan-900"
           >

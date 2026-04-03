@@ -9,12 +9,13 @@ import Login from "./Components/Login/Login.jsx";
 import Register from "./Components/Register/Register.jsx";
 import AuthProvider from "./Contextx/AuthContext/AuthProvider.jsx";
 import Booking from "./Components/Booking/Booking.jsx";
-import Profile from "./Components/Profile/Profile.jsx";
+import Blog from "./Components/Blog/Blog.jsx";
 import PrivateRoutes from "./Routes/PrivateRoutes.jsx";
 import Packages from "./Components/Packages/Packages.jsx";
 import PackageDetails from "./Components/PackageDetails/PackageDetails.jsx";
 import Ledger from "./Components/Ledger/Ledger.jsx";
 import Payment from "./Components/Payment/Payment.jsx";
+import Profile from "./Components/Profile/Profile.jsx";
 
 const router = createBrowserRouter([
   {
@@ -55,6 +56,14 @@ const router = createBrowserRouter([
         Component: () => (
           <PrivateRoutes>
             <Payment />
+          </PrivateRoutes>
+        ),
+      },
+      {
+        path: "/blog",
+        Component: () => (
+          <PrivateRoutes>
+            <Blog />
           </PrivateRoutes>
         ),
       },
