@@ -3,53 +3,84 @@ import Home from "../Home/Home";
 import { NavLink } from "react-router-dom";
 import AuthContext from "../../Contextx/AuthContext/AuthContext";
 import { Link } from "react-router-dom";
+import logo from "../../assets/images/logo.png";
 
 const Navbar = () => {
-  const {user, signOutUser} = use(AuthContext);
-  const handleSignOut = ()=>{
+  const { user, signOutUser } = use(AuthContext);
+  const handleSignOut = () => {
     signOutUser()
-    .then(()=>{
-      //sign-out successful
-    })
-    .catch((error)=>{
-      console.error("Error signing out:", error);
-    });
-  }
+      .then(() => {
+        //sign-out successful
+      })
+      .catch((error) => {
+        console.error("Error signing out:", error);
+      });
+  };
   const Links = (
     <>
       <li>
-        <NavLink to="/"
-        className={({isActive})=>{
-          return isActive? "text-blue-500 underline hover:text-blue-700":"";
-        }}>Home</NavLink>
+        <NavLink
+          to="/"
+          className={({ isActive }) => {
+            return isActive
+              ? "text-blue-500 underline hover:text-blue-700"
+              : "";
+          }}
+        >
+          Home
+        </NavLink>
       </li>
       <li>
-        <NavLink to="/login" className={({ isActive }) => {
-          return isActive ? "text-blue-500 underline hover:text-blue-700" : "";
-        }}>Login</NavLink>
+        <NavLink
+          to="/login"
+          className={({ isActive }) => {
+            return isActive
+              ? "text-blue-500 underline hover:text-blue-700"
+              : "";
+          }}
+        >
+          Login
+        </NavLink>
       </li>
       <li>
-        <NavLink to="/register" className={({isActive})=>{
-          return isActive ? "text-blue-500 underline hover:text-blue-700": "";
-        }}>Signup</NavLink>
+        <NavLink
+          to="/register"
+          className={({ isActive }) => {
+            return isActive
+              ? "text-blue-500 underline hover:text-blue-700"
+              : "";
+          }}
+        >
+          Signup
+        </NavLink>
       </li>
       <li>
-        <NavLink to={user?"/yourneed":"/login"} className={({isActive})=>{
-          return isActive ? "text-blue-500 underline hover:text-blue-700": "";
-        }}>Your Need</NavLink>
+        <NavLink
+          to={user ? "/yourneed" : "/login"}
+          className={({ isActive }) => {
+            return isActive
+              ? "text-blue-500 underline hover:text-blue-700"
+              : "";
+          }}
+        >
+          Your Need
+        </NavLink>
       </li>
 
-      {
-        user && <>
-        <li><NavLink to='/orders'>Orders</NavLink></li>
-        <li><NavLink to='/profile'>Profile</NavLink></li>
-
+      {user && (
+        <>
+          <li>
+            <NavLink to="/orders">Orders</NavLink>
+          </li>
+          <li>
+            <NavLink to="/profile">Profile</NavLink>
+          </li>
         </>
-      }
+      )}
     </>
   );
   return (
-    <div className="navbar bg-base-100 shadow-sm">
+    <div className="navbar fixed top-0 left-0 z-50 w-full bg-base-100 shadow-sm">
       <div className="navbar-start">
         <div className="dropdown">
           <div tabIndex={0} role="button" className="btn btn-ghost lg:hidden">
@@ -76,16 +107,25 @@ const Navbar = () => {
             {Links}
           </ul>
         </div>
-        <a className="btn btn-ghost text-xl">daisyUI</a>
+        <a className="btn btn-ghost text-xl">
+          <img
+            className="w-25 h-10 bg-amber-50 rounded-xl p-1"
+            src={logo}
+            alt="Logo"
+          />
+        </a>
       </div>
       <div className="navbar-center hidden lg:flex">
         <ul className="menu menu-horizontal px-1 gap-6">{Links}</ul>
       </div>
       <div className="navbar-end">
-        
-        {
-          user? <a className="btn" onClick={handleSignOut}>Sign Out</a>: <Link to="/login">Login</Link>
-        }
+        {user ? (
+          <a className="btn" onClick={handleSignOut}>
+            Sign Out
+          </a>
+        ) : (
+          <Link to="/login">Login</Link>
+        )}
       </div>
     </div>
   );
