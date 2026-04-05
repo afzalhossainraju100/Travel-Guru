@@ -1,13 +1,3 @@
-import Sajek from "../assets/images/Sajek.png";
-import Sreemongol from "../assets/images/Sreemongol.png";
-import Sundorbon from "../assets/images/sundorbon.png";
-
-const destinations = [
-  { id: 1, name: "COX'S BAZAR", image: Sajek },
-  { id: 2, name: "SREEMANGAL", image: Sreemongol },
-  { id: 3, name: "SUNDARBANS", image: Sundorbon },
-];
-
 const faqs = [
   {
     id: 1,
@@ -34,10 +24,6 @@ const faqs = [
       "Yes. Booking, wishlist, payment, and profile features are protected and available after you sign in.",
   },
 ];
-
-export const getHomeDestinations = () => {
-  return destinations;
-};
 
 export const getHomeFaqs = () => {
   return faqs;

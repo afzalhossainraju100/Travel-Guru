@@ -1,7 +1,13 @@
+import CoxsBazarCardImage from "../assets/images/hotelCoxBazar.png";
+import SajekCardImage from "../assets/images/HotelCuakata.png";
+import SreemangalCardImage from "../assets/images/HotelBitchViewCoxbazar.png";
+
 const packagesData = [
   {
     id: 1,
     title: "Cox's Bazar Escape",
+    destinationName: "COX'S BAZAR",
+    destinationImage: CoxsBazarCardImage,
     location: "Cox's Bazar, Bangladesh",
     duration: "3 Days / 2 Nights",
     startDate: "2026-05-10",
@@ -34,6 +40,8 @@ const packagesData = [
   {
     id: 2,
     title: "Sajek Valley Retreat",
+    destinationName: "SAJEK",
+    destinationImage: SajekCardImage,
     location: "Rangamati, Bangladesh",
     duration: "2 Days / 1 Night",
     startDate: "2026-06-14",
@@ -66,6 +74,8 @@ const packagesData = [
   {
     id: 3,
     title: "Sreemangal Tea Tour",
+    destinationName: "SREEMANGAL",
+    destinationImage: SreemangalCardImage,
     location: "Sylhet, Bangladesh",
     duration: "4 Days / 3 Nights",
     startDate: "2026-07-05",

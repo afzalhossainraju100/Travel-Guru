@@ -2,17 +2,19 @@ import React, { useContext, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import HomeBg from "../../assets/images/Rectangle1.png";
 import AuthContext from "../../Contextx/AuthContext/AuthContext";
-import {
-  getHomeDestinations,
-  getHomeFaqs,
-} from "../../services/homeContentService";
+import { getHomeFaqs } from "../../services/faqData";
+import packagesData from "../../services/packagesData";
 
 const Home = () => {
   const { user } = useContext(AuthContext) || {};
   const navigate = useNavigate();
   const cardRowRef = useRef(null);
 
-  const destinations = getHomeDestinations();
+  const destinations = packagesData.map((pkg) => ({
+    id: pkg.id,
+    name: pkg.destinationName || pkg.title.toUpperCase(),
+    image: pkg.destinationImage || pkg.image,
+  }));
   const faqs = getHomeFaqs();
 
   const scrollCards = (direction) => {
