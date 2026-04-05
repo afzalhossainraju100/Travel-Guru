@@ -1,48 +1,19 @@
 import React, { useContext, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import HomeBg from "../../assets/images/Rectangle1.png";
-import Sajek from "../../assets/images/Sajek.png";
-import Sreemongol from "../../assets/images/Sreemongol.png";
-import Sundorbon from "../../assets/images/sundorbon.png";
 import AuthContext from "../../Contextx/AuthContext/AuthContext";
+import {
+  getHomeDestinations,
+  getHomeFaqs,
+} from "../../services/homeContentService";
 
 const Home = () => {
   const { user } = useContext(AuthContext) || {};
   const navigate = useNavigate();
   const cardRowRef = useRef(null);
 
-  const destinations = [
-    { id: 1, name: "COX'S BAZAR", image: Sajek },
-    { id: 2, name: "SREEMANGAL", image: Sreemongol },
-    { id: 3, name: "SUNDARBANS", image: Sundorbon },
-  ];
-
-  const faqs = [
-    {
-      id: 1,
-      question: "How do I book a tour package?",
-      answer:
-        "Open any package details page, click Book Now, choose traveler count in Ledger, then complete payment to save it in your Booking List.",
-    },
-    {
-      id: 2,
-      question: "Can I save a place for later without booking?",
-      answer:
-        "Yes. Use the Wish button in package details to add it to your Wish List for future travel planning.",
-    },
-    {
-      id: 3,
-      question: "Can I remove bookings and wishlist items later?",
-      answer:
-        "Yes. Both Booking List and Wish List cards include delete actions so you can manage your saved tours anytime.",
-    },
-    {
-      id: 4,
-      question: "Do I need to login before booking?",
-      answer:
-        "Yes. Booking, wishlist, payment, and profile features are protected and available after you sign in.",
-    },
-  ];
+  const destinations = getHomeDestinations();
+  const faqs = getHomeFaqs();
 
   const scrollCards = (direction) => {
     if (!cardRowRef.current) return;

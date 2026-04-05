@@ -27,6 +27,16 @@ dist-ssr
 .env
 .env.local
 .env.*.local
+.env.development
+.env.production
+.env.test
+.env.staging
+*.env
+*.pem
+*.key
+*.p12
+*.jks
+serviceAccountKey*.json
 
-# Firebase configuration
-src/Firebase/Firebase.init.js
+# Keep only the template env file in Git
+!.env.example

@@ -2,6 +2,7 @@ import React from "react";
 import Navbar from "../Components/Navbar/Navbar.jsx";
 import { Outlet } from "react-router-dom";
 import Footer from "../Components/Footer/Footer.jsx";
+import ChatBotWidget from "../Components/ChatBot/ChatBotWidget.jsx";
 
 const Roots = () => {
   return (
@@ -11,6 +12,7 @@ const Roots = () => {
         <Outlet></Outlet>
       </div>
       <Footer></Footer>
+      <ChatBotWidget />
     </div>
   );
 };
