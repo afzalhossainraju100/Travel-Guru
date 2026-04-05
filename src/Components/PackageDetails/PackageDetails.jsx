@@ -47,6 +47,12 @@ const PackageDetails = () => {
     maximumFractionDigits: 0,
   });
 
+  const dateFormatter = new Intl.DateTimeFormat("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+
   const handleBookNow = () => {
     const userIdentifier = user?.uid || user?.email;
 
@@ -135,6 +141,14 @@ const PackageDetails = () => {
     );
   }
 
+  const startDateLabel = selectedPackage.startDate
+    ? dateFormatter.format(new Date(selectedPackage.startDate))
+    : "Not set";
+
+  const endDateLabel = selectedPackage.endDate
+    ? dateFormatter.format(new Date(selectedPackage.endDate))
+    : "Not set";
+
   return (
     <div className="min-h-screen bg-linear-to-b from-sky-100 via-cyan-50 to-white px-4 py-12">
       <div className="mx-auto max-w-6xl overflow-hidden rounded-2xl border border-cyan-100 bg-white/95 shadow-xl">
@@ -166,6 +180,66 @@ const PackageDetails = () => {
           <p className="mt-6 leading-7 text-slate-700">
             {selectedPackage.description}
           </p>
+
+          <div className="mt-6 grid gap-4 rounded-xl border border-cyan-100 bg-cyan-50/60 p-4 md:grid-cols-2">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                Tour Start Date
+              </p>
+              <p className="mt-1 text-base font-bold text-slate-800">
+                {startDateLabel}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                Tour End Date
+              </p>
+              <p className="mt-1 text-base font-bold text-slate-800">
+                {endDateLabel}
+              </p>
+            </div>
+          </div>
+
+          {selectedPackage.spots?.length > 0 && (
+            <div className="mt-6">
+              <h3 className="text-lg font-bold text-slate-800">
+                Spots You Will Visit With My Team
+              </h3>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {selectedPackage.spots.map((spot, index) => (
+                  <span
+                    key={index}
+                    className="rounded-full bg-amber-100 px-3 py-1 text-sm font-medium text-amber-800"
+                  >
+                    {spot}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {selectedPackage.spotImages?.length > 0 && (
+            <div className="mt-8">
+              <h3 className="text-lg font-bold text-slate-800">Spot Images</h3>
+              <div className="mt-4 grid gap-4 sm:grid-cols-2 md:grid-cols-3">
+                {selectedPackage.spotImages.slice(0, 3).map((spot) => (
+                  <div
+                    key={spot.name}
+                    className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm"
+                  >
+                    <img
+                      src={spot.image}
+                      alt={spot.name}
+                      className="h-44 w-full object-cover"
+                    />
+                    <p className="px-3 py-2 text-sm font-semibold text-slate-700">
+                      {spot.name}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           <div className="mt-6 flex flex-wrap gap-2">
             {selectedPackage.features.map((feature, index) => (
