@@ -9,6 +9,16 @@ const Navbar = () => {
   const { user, signOutUser } = useContext(AuthContext);
   const [menuOpen, setMenuOpen] = useState(false);
 
+  const getNavLinkClass = (
+    { isActive },
+    inactiveTextColor = "text-slate-700",
+  ) =>
+    `${inactiveTextColor} relative inline-flex items-center py-1 transition-colors duration-200 hover:text-cyan-950 active:bg-transparent after:absolute after:-bottom-0.5 after:left-0 after:h-[2px] after:w-full after:origin-left after:rounded-full after:bg-cyan-500 after:shadow-[0_0_12px_rgba(6,182,212,0.45)] after:transition-transform after:duration-300 after:ease-out ${
+      isActive
+        ? "font-semibold text-cyan-950 after:scale-x-100"
+        : "after:scale-x-0 hover:after:scale-x-100"
+    }`;
+
   const handleSignOut = () => {
     signOutUser()
       .then(() => {
@@ -24,11 +34,7 @@ const Navbar = () => {
         <NavLink
           to="/"
           onClick={() => setMenuOpen(false)}
-          className={({ isActive }) => {
-            return isActive
-              ? "font-semibold text-cyan-950 underline decoration-2 underline-offset-4"
-              : "text-slate-700 transition-colors hover:text-cyan-950";
-          }}
+          className={(state) => getNavLinkClass(state)}
         >
           Home
         </NavLink>
@@ -38,11 +44,7 @@ const Navbar = () => {
           <NavLink
             to="/login"
             onClick={() => setMenuOpen(false)}
-            className={({ isActive }) => {
-              return isActive
-                ? "font-semibold text-cyan-950 underline decoration-2 underline-offset-4"
-                : "text-slate-700 transition-colors hover:text-cyan-950";
-            }}
+            className={(state) => getNavLinkClass(state)}
           >
             Login
           </NavLink>
@@ -53,11 +55,7 @@ const Navbar = () => {
           <NavLink
             to="/register"
             onClick={() => setMenuOpen(false)}
-            className={({ isActive }) => {
-              return isActive
-                ? "font-semibold text-cyan-950 underline decoration-2 underline-offset-4"
-                : "text-slate-700 transition-colors hover:text-cyan-950";
-            }}
+            className={(state) => getNavLinkClass(state)}
           >
             Signup
           </NavLink>
@@ -67,11 +65,7 @@ const Navbar = () => {
         <NavLink
           to={user ? "/packages" : "/login"}
           onClick={() => setMenuOpen(false)}
-          className={({ isActive }) => {
-            return isActive
-              ? "font-semibold text-cyan-950 underline decoration-2 underline-offset-4"
-              : "text-slate-700 transition-colors hover:text-cyan-950";
-          }}
+          className={(state) => getNavLinkClass(state)}
         >
           All Packages
         </NavLink>
@@ -83,7 +77,7 @@ const Navbar = () => {
             <NavLink
               to="/booking"
               onClick={() => setMenuOpen(false)}
-              className="text-black transition-colors hover:text-cyan-950"
+              className={(state) => getNavLinkClass(state, "text-black")}
             >
               Booking Info
             </NavLink>
@@ -92,16 +86,16 @@ const Navbar = () => {
             <NavLink
               to="/blog"
               onClick={() => setMenuOpen(false)}
-              className="text-black transition-colors hover:text-cyan-950"
+              className={(state) => getNavLinkClass(state, "text-black")}
             >
               Blog
             </NavLink>
           </li>
-                    <li>
+          <li>
             <NavLink
               to="/profile"
               onClick={() => setMenuOpen(false)}
-              className="text-black transition-colors hover:text-cyan-950"
+              className={(state) => getNavLinkClass(state, "text-black")}
             >
               Profile
             </NavLink>
@@ -193,7 +187,7 @@ const Navbar = () => {
           <Link
             to="/login"
             onClick={handleMenuAction}
-            className="rounded-lg bg-cyan-950 px-4 py-2 text-sm font-semibold text-white hover:bg-cyan-900 sm:text-base"
+            className="rounded-lg bg-cyan-950 px-4 py-2 text-sm font-semibold text-white hover:bg-cyan-900 active:bg-cyan-950 sm:text-base"
           >
             Login
           </Link>

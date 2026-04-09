@@ -1,14 +1,51 @@
-import CoxsBazarCardImage from "../assets/images/hotelCoxBazar.png";
-import SajekCardImage from "../assets/images/HotelCuakata.png";
-import SreemangalCardImage from "../assets/images/HotelBitchViewCoxbazar.png";
+import SajekImage from "../assets/images/Sajek.png";
+import SreemongolImage from "../assets/images/Sreemongol.png";
+import SundorbonImage from "../assets/images/sundorbon.png";
+import CoxBazarImage from "../assets/images/Coxbazar.jpg";
+
+const locationImage2Map = {
+  cox: CoxBazarImage,
+  rangamati: SajekImage,
+  sajek: SajekImage,
+  sundarban: SundorbonImage,
+  khulna: SundorbonImage,
+  sylhet: SreemongolImage,
+  sreemangal: SreemongolImage,
+};
+
+const getImage2ByLocation = (location = "") => {
+  const normalizedLocation = location.toLowerCase();
+  const matchedKey = Object.keys(locationImage2Map).find((key) =>
+    normalizedLocation.includes(key),
+  );
+
+  return matchedKey ? locationImage2Map[matchedKey] : CoxBazarImage;
+};
+
+const normalizePackage = (pkg) => ({
+  id: pkg.id,
+  title: pkg.title,
+  destinationName: pkg.destinationName,
+  location: pkg.location,
+  image2: pkg.image2,
+  duration: pkg.duration,
+  startDate: pkg.startDate,
+  endDate: pkg.endDate,
+  priceBdt: pkg.priceBdt,
+  image: pkg.image,
+  features: pkg.features,
+  spots: pkg.spots,
+  spotImages: pkg.spotImages,
+  description: pkg.description,
+});
 
 const packagesData = [
-  {
+  normalizePackage({
     id: 1,
     title: "Cox's Bazar Escape",
     destinationName: "COX'S BAZAR",
-    destinationImage: CoxsBazarCardImage,
     location: "Cox's Bazar, Bangladesh",
+    image2: CoxBazarImage,
     duration: "3 Days / 2 Nights",
     startDate: "2026-05-10",
     endDate: "2026-05-12",
@@ -36,13 +73,13 @@ const packagesData = [
     ],
     description:
       "Travel with my team from 10 May 2026 to 12 May 2026 and explore Cox's Bazar's top highlights including Laboni Beach, Inani Beach, and Himchari National Park, along with sea views, fresh seafood, and relaxing sunset moments.",
-  },
-  {
+  }),
+  normalizePackage({
     id: 2,
     title: "Sajek Valley Retreat",
     destinationName: "SAJEK",
-    destinationImage: SajekCardImage,
     location: "Rangamati, Bangladesh",
+    image2: getImage2ByLocation("Rangamati, Bangladesh"),
     duration: "2 Days / 1 Night",
     startDate: "2026-06-14",
     endDate: "2026-06-15",
@@ -70,13 +107,47 @@ const packagesData = [
     ],
     description:
       "Join my team from 14 June 2026 to 15 June 2026 for a refreshing Sajek tour, where we visit Konglak Hill, Ruilui Para, and the famous Sajek Helipad for cloud-kissed hill views and peaceful mornings.",
-  },
-  {
+  }),
+  normalizePackage({
     id: 3,
+    title: "Sundarban Mangrove Adventure",
+    destinationName: "SUNDARBAN",
+    location: "Khulna, Bangladesh",
+    image2: getImage2ByLocation("Khulna, Bangladesh"),
+    duration: "3 Days / 2 Nights",
+    startDate: "2026-06-25",
+    endDate: "2026-06-27",
+    priceBdt: 31900,
+    image:
+      "https://images.unsplash.com/photo-1511497584788-876760111969?auto=format&fit=crop&w=1200&q=80",
+    features: ["Boat Safari", "Forest Guide", "Meals Included"],
+    spots: ["Harbaria Eco Park", "Karamjal Wildlife Center", "Kotka Beach"],
+    spotImages: [
+      {
+        name: "Harbaria Eco Park",
+        image:
+          "https://images.unsplash.com/photo-1505761671935-60b3a7427bad?auto=format&fit=crop&w=1200&q=80",
+      },
+      {
+        name: "Karamjal Wildlife Center",
+        image:
+          "https://images.unsplash.com/photo-1472396961693-142e6e269027?auto=format&fit=crop&w=1200&q=80",
+      },
+      {
+        name: "Kotka Beach",
+        image:
+          "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&w=1200&q=80",
+      },
+    ],
+    description:
+      "Travel with my team from 25 June 2026 to 27 June 2026 through the world's largest mangrove forest and visit Harbaria Eco Park, Karamjal Wildlife Center, and Kotka Beach with guided boat safari experiences.",
+  }),
+  normalizePackage({
+    id: 4,
     title: "Sreemangal Tea Tour",
     destinationName: "SREEMANGAL",
-    destinationImage: SreemangalCardImage,
     location: "Sylhet, Bangladesh",
+    image2: getImage2ByLocation("Sylhet, Bangladesh"),
     duration: "4 Days / 3 Nights",
     startDate: "2026-07-05",
     endDate: "2026-07-08",
@@ -104,7 +175,7 @@ const packagesData = [
     ],
     description:
       "Come with my team from 05 July 2026 to 08 July 2026 to discover Sreemangal's best spots, including Lawachara National Park, Madhabpur Lake, and Nilkantha Tea Cabin, with calm tea garden walks and local culture.",
-  },
+  }),
 ];
 
 export default packagesData;

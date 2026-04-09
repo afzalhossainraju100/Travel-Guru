@@ -10,11 +10,13 @@ const Home = () => {
   const navigate = useNavigate();
   const cardRowRef = useRef(null);
 
-  const destinations = packagesData.map((pkg) => ({
-    id: pkg.id,
-    name: pkg.destinationName || pkg.title.toUpperCase(),
-    image: pkg.destinationImage || pkg.image,
-  }));
+  const destinations = packagesData
+    .map((pkg) => ({
+      id: pkg.id,
+      name: pkg.destinationName || pkg.title.toUpperCase(),
+      image: pkg.image2 || pkg.destinationImage || pkg.image,
+    }))
+    .slice(0, 8);
   const faqs = getHomeFaqs();
 
   const scrollCards = (direction) => {
@@ -34,6 +36,19 @@ const Home = () => {
 
     navigate("/login", {
       state: { from: { pathname: "/packages" } },
+    });
+  };
+
+  const handleDestinationClick = (packageId) => {
+    const detailsPath = `/packages/${packageId}`;
+
+    if (user) {
+      navigate(detailsPath);
+      return;
+    }
+
+    navigate("/login", {
+      state: { from: { pathname: detailsPath } },
     });
   };
 
@@ -75,9 +90,19 @@ const Home = () => {
                 {destinations.map((destination, index) => (
                   <div
                     key={destination.id}
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => handleDestinationClick(destination.id)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        handleDestinationClick(destination.id);
+                      }
+                    }}
                     className={`relative h-[280px] w-[220px] shrink-0 snap-center overflow-hidden rounded-3xl border-2 shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:border-[#F9A51A] sm:h-[320px] sm:w-[240px] md:h-[350px] md:w-[260px] lg:h-[380px] lg:w-[275px] ${
                       index === 0 ? "" : "border-transparent"
                     }`}
+                    aria-label={`Open ${destination.name} package details`}
                   >
                     <img
                       src={destination.image}

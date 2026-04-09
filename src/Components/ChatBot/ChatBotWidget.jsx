@@ -107,7 +107,7 @@ const ChatBotWidget = () => {
                 value={input}
                 onChange={(event) => setInput(event.target.value)}
                 placeholder="Type your question..."
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-cyan-500"
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-black outline-none focus:border-cyan-500"
               />
               <button
                 type="submit"
