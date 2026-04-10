@@ -1,6 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import Dashboard from "../Dashboard/Dashboard";
+import CreatePackage from "../CreatePackage/CreatePackage";
 
 const AdminProfile = ({ profile }) => {
   const bookingCount = Array.isArray(profile?.bookingHistory)
@@ -108,6 +109,7 @@ const AdminProfile = ({ profile }) => {
         </div>
 
         <Dashboard />
+        <CreatePackage isAdmin={true} />
       </div>
     </section>
   );
