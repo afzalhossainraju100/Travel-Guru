@@ -1,5 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import Dashboard from "../Dashboard/Dashboard";
 
 const AdminProfile = ({ profile }) => {
   const bookingCount = Array.isArray(profile?.bookingHistory)
@@ -105,6 +106,8 @@ const AdminProfile = ({ profile }) => {
             </div>
           </div>
         </div>
+
+        <Dashboard />
       </div>
     </section>
   );

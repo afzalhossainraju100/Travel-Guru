@@ -125,6 +125,7 @@ const Update = () => {
     try {
       const updated = await updateUserById(userId, {
         name: formData.name.trim(),
+        email: profile?.email || user?.email || "",
         phoneNumber: formData.phoneNumber.trim(),
         address: formData.address.trim(),
         profileImage: formData.profileImage.trim(),
