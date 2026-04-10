@@ -1,13 +1,48 @@
-import React, { useContext, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { NavLink } from "react-router-dom";
 import AuthContext from "../../Contextx/AuthContext/AuthContext";
 import { Link } from "react-router-dom";
 import logo from "../../assets/images/logo.png";
 import HomeBg from "../../assets/images/Rectangle1.png";
+import { fetchUserByEmail } from "../../services/userService";
 
 const Navbar = () => {
   const { user, signOutUser } = useContext(AuthContext);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false);
+  const [profileName, setProfileName] = useState("");
+
+  useEffect(() => {
+    let active = true;
+
+    const loadProfileName = async () => {
+      if (!user?.email) {
+        setProfileName("");
+        return;
+      }
+
+      try {
+        const profile = await fetchUserByEmail(user.email);
+        if (active) {
+          setProfileName(profile?.name || "");
+        }
+      } catch {
+        if (active) {
+          setProfileName("");
+        }
+      }
+    };
+
+    loadProfileName();
+
+    return () => {
+      active = false;
+    };
+  }, [user?.email]);
+
+  const userName =
+    profileName || user?.displayName || user?.email?.split("@")[0] || "User";
+  const userInitial = userName.charAt(0).toUpperCase();
 
   const getNavLinkClass = (
     { isActive },
@@ -23,6 +58,8 @@ const Navbar = () => {
     signOutUser()
       .then(() => {
         //sign-out successful
+        setMenuOpen(false);
+        setProfileMenuOpen(false);
       })
       .catch((error) => {
         console.error("Error signing out:", error);
@@ -107,6 +144,7 @@ const Navbar = () => {
 
   const handleMenuAction = () => {
     setMenuOpen(false);
+    setProfileMenuOpen(false);
   };
 
   return (
@@ -176,13 +214,70 @@ const Navbar = () => {
           </ul>
         </div>
         {user ? (
-          <button
-            type="button"
-            className="btn border-none bg-cyan-950 px-4 text-white hover:bg-cyan-900"
-            onClick={handleSignOut}
-          >
-            Sign Out
-          </button>
+          <>
+            <div className="hidden md:flex items-center gap-3">
+              <button
+                type="button"
+                className="btn border-none bg-cyan-950 px-4 text-white hover:bg-cyan-900"
+                onClick={handleSignOut}
+              >
+                Sign Out
+              </button>
+
+              <span className="max-w-36 truncate text-sm font-semibold text-slate-800 sm:max-w-44 sm:text-base">
+                {userName}
+              </span>
+
+              {user?.photoURL ? (
+                <img
+                  src={user.photoURL}
+                  alt={userName}
+                  className="h-10 w-10 rounded-full border-2 border-cyan-200 object-cover"
+                />
+              ) : (
+                <div className="grid h-10 w-10 place-items-center rounded-full border-2 border-cyan-200 bg-cyan-900 text-sm font-bold text-white">
+                  {userInitial}
+                </div>
+              )}
+            </div>
+
+            <div className="relative md:hidden">
+              <button
+                type="button"
+                onClick={() => setProfileMenuOpen((open) => !open)}
+                aria-label="Open profile menu"
+                aria-expanded={profileMenuOpen}
+                className="rounded-full border border-cyan-200 bg-white/80 p-0.5"
+              >
+                {user?.photoURL ? (
+                  <img
+                    src={user.photoURL}
+                    alt={userName}
+                    className="h-9 w-9 rounded-full object-cover"
+                  />
+                ) : (
+                  <div className="grid h-9 w-9 place-items-center rounded-full bg-cyan-900 text-sm font-bold text-white">
+                    {userInitial}
+                  </div>
+                )}
+              </button>
+
+              {profileMenuOpen && (
+                <div className="absolute right-0 top-full mt-2 w-52 rounded-xl border border-cyan-100 bg-white/95 p-3 shadow-xl backdrop-blur-md">
+                  <p className="truncate text-sm font-semibold text-slate-800">
+                    {userName}
+                  </p>
+                  <button
+                    type="button"
+                    className="mt-3 w-full rounded-lg bg-cyan-950 px-4 py-2 text-sm font-semibold text-white hover:bg-cyan-900"
+                    onClick={handleSignOut}
+                  >
+                    Sign Out
+                  </button>
+                </div>
+              )}
+            </div>
+          </>
         ) : (
           <Link
             to="/login"

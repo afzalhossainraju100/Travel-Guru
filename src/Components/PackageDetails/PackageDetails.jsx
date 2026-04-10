@@ -1,7 +1,5 @@
 import React, { useContext, useEffect, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
-import { getPackageById } from "../../services/packagesService";
-import { saveCheckoutDraft } from "../../services/checkoutService";
+import { Link, useLoaderData, useNavigate, useParams } from "react-router-dom";
 import {
   addWishlistForUser,
   isPackageWishlisted,
@@ -11,35 +9,23 @@ import AuthContext from "../../Contextx/AuthContext/AuthContext";
 
 const PackageDetails = () => {
   const { id } = useParams();
+  const selectedPackage = useLoaderData();
   const { user } = useContext(AuthContext) || {};
   const navigate = useNavigate();
-  const [selectedPackage, setSelectedPackage] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
   const [bookingMessage, setBookingMessage] = useState("");
   const [wishlistMessage, setWishlistMessage] = useState("");
   const [isWishlisted, setIsWishlisted] = useState(false);
 
+  const userIdentifier = user?.email || user?.uid;
+
   useEffect(() => {
-    const loadPackage = async () => {
-      try {
-        setLoading(true);
-        const data = await getPackageById(id);
-        setSelectedPackage(data);
-      } catch (err) {
-        setError(err?.message || "Failed to load package details.");
-      } finally {
-        setLoading(false);
-      }
+    const loadWishlistState = async () => {
+      const saved = await isPackageWishlisted(userIdentifier, id);
+      setIsWishlisted(saved);
     };
 
-    loadPackage();
-  }, [id]);
-
-  useEffect(() => {
-    const userIdentifier = user?.uid || user?.email;
-    setIsWishlisted(isPackageWishlisted(userIdentifier, id));
-  }, [id, user]);
+    loadWishlistState();
+  }, [id, userIdentifier]);
 
   const bdtFormatter = new Intl.NumberFormat("en-BD", {
     style: "currency",
@@ -53,72 +39,62 @@ const PackageDetails = () => {
     year: "numeric",
   });
 
-  const handleBookNow = () => {
-    const userIdentifier = user?.uid || user?.email;
+  const getTransportText = (transport) => {
+    if (!transport) return "Transport information not set";
+    if (typeof transport === "string") return transport;
 
+    const parts = [transport.type, transport.departure, transport.return]
+      .filter(Boolean)
+      .join(" | ");
+
+    return parts || "Transport information not set";
+  };
+
+  const getHotelText = (hotel) => {
+    if (!hotel) return "Hotel information not set";
+    if (typeof hotel === "string") return hotel;
+
+    const amenityText = Array.isArray(hotel.amenities)
+      ? hotel.amenities.join(", ")
+      : "";
+
+    const parts = [hotel.name, hotel.type, amenityText]
+      .filter(Boolean)
+      .join(" | ");
+
+    return parts || "Hotel information not set";
+  };
+
+  const handleBookNow = () => {
     if (!userIdentifier || !selectedPackage) {
       setBookingMessage(
-        "Unable to save booking right now. Please login again.",
+        "Unable to open booking form right now. Please login again.",
       );
       return;
     }
 
-    saveCheckoutDraft(userIdentifier, {
-      package: selectedPackage,
-      travelers: 1,
-    });
-    navigate(`/ledger/${selectedPackage.id}`, {
-      state: { package: selectedPackage, travelers: 1 },
+    navigate(`/ledger/${selectedPackage._id}`, {
+      state: { package: selectedPackage },
     });
   };
 
-  const handleWishlist = () => {
-    const userIdentifier = user?.uid || user?.email;
-
+  const handleWishlist = async () => {
     if (!userIdentifier || !selectedPackage) {
       setWishlistMessage("Please login to save this package for future tours.");
       return;
     }
 
     if (isWishlisted) {
-      removeWishlistForUser(userIdentifier, selectedPackage.id);
+      await removeWishlistForUser(userIdentifier, selectedPackage._id);
       setIsWishlisted(false);
       setWishlistMessage("Removed from your wishlist.");
       return;
     }
 
-    addWishlistForUser(userIdentifier, selectedPackage);
+    await addWishlistForUser(userIdentifier, selectedPackage);
     setIsWishlisted(true);
     setWishlistMessage("Added to your wishlist for future tours.");
   };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-linear-to-b from-sky-100 via-cyan-50 to-white px-4 py-16">
-        <div className="mx-auto max-w-3xl rounded-2xl border border-cyan-100 bg-white/90 p-8 text-center shadow-lg">
-          <p className="text-lg font-semibold text-slate-700">
-            Loading package details...
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="min-h-screen bg-linear-to-b from-sky-100 via-cyan-50 to-white px-4 py-16">
-        <div className="mx-auto max-w-3xl rounded-2xl border border-red-200 bg-white/90 p-8 text-center shadow-lg">
-          <p className="text-lg font-semibold text-red-600">{error}</p>
-          <Link
-            to="/packages"
-            className="mt-6 inline-block rounded-lg bg-cyan-900 px-5 py-2.5 font-semibold text-white hover:bg-cyan-800"
-          >
-            Back to Packages
-          </Link>
-        </div>
-      </div>
-    );
-  }
 
   if (!selectedPackage) {
     return (
@@ -200,6 +176,26 @@ const PackageDetails = () => {
             </div>
           </div>
 
+          <div className="mt-6 grid gap-4 md:grid-cols-2">
+            <div className="rounded-2xl border border-sky-100 bg-sky-50/70 p-5">
+              <p className="text-xs font-semibold uppercase tracking-wide text-sky-700">
+                Transport
+              </p>
+              <h3 className="mt-2 text-lg font-bold text-slate-800">
+                {getTransportText(selectedPackage.transport)}
+              </h3>
+            </div>
+
+            <div className="rounded-2xl border border-emerald-100 bg-emerald-50/70 p-5">
+              <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">
+                Hotel
+              </p>
+              <h3 className="mt-2 text-lg font-bold text-slate-800">
+                {getHotelText(selectedPackage.hotel)}
+              </h3>
+            </div>
+          </div>
+
           {selectedPackage.spots?.length > 0 && (
             <div className="mt-6">
               <h3 className="text-lg font-bold text-slate-800">
@@ -242,7 +238,7 @@ const PackageDetails = () => {
           )}
 
           <div className="mt-6 flex flex-wrap gap-2">
-            {selectedPackage.features.map((feature, index) => (
+            {(selectedPackage.features || []).map((feature, index) => (
               <span
                 key={index}
                 className="rounded-full bg-cyan-100 px-3 py-1 text-sm font-medium text-cyan-900"

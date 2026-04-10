@@ -1,18 +1,18 @@
 import React, { useContext, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLoaderData, useNavigate } from "react-router-dom";
 import HomeBg from "../../assets/images/Rectangle1.png";
 import AuthContext from "../../Contextx/AuthContext/AuthContext";
 import { getHomeFaqs } from "../../services/faqData";
-import packagesData from "../../services/packagesData";
 
 const Home = () => {
+  const packagesData = useLoaderData() || [];
   const { user } = useContext(AuthContext) || {};
   const navigate = useNavigate();
   const cardRowRef = useRef(null);
 
   const destinations = packagesData
     .map((pkg) => ({
-      id: pkg.id,
+      id: pkg._id,
       name: pkg.destinationName || pkg.title.toUpperCase(),
       image: pkg.image2 || pkg.destinationImage || pkg.image,
     }))

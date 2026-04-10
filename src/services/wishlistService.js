@@ -1,60 +1,100 @@
-const getWishlistKey = (userIdentifier) =>
-  `travelGuruWishlists:${userIdentifier}`;
+const normalizePackageId = (packageId) => String(packageId || "");
 
-export const getWishlistByUser = (userIdentifier) => {
+const getStorageKey = (userIdentifier) =>
+  `travel-guru:wishlist:${String(userIdentifier || "").toLowerCase()}`;
+
+const normalizeWishlistItem = (item) => {
+  if (!item) return null;
+
+  return {
+    ...item,
+    _id: String(item._id || item.id || item.packageId || ""),
+  };
+};
+
+const readWishlistFromStorage = (userIdentifier) => {
   if (!userIdentifier) return [];
 
   try {
-    const rawWishlist = localStorage.getItem(getWishlistKey(userIdentifier));
-    if (!rawWishlist) return [];
+    const raw = localStorage.getItem(getStorageKey(userIdentifier));
+    if (!raw) return [];
 
-    const parsed = JSON.parse(rawWishlist);
-    return Array.isArray(parsed) ? parsed : [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed)
+      ? parsed.map(normalizeWishlistItem).filter(Boolean)
+      : [];
   } catch {
     return [];
   }
 };
 
-export const isPackageWishlisted = (userIdentifier, packageId) => {
+const writeWishlistToStorage = (userIdentifier, wishlist) => {
+  if (!userIdentifier) return;
+
+  const normalized = Array.isArray(wishlist)
+    ? wishlist.map(normalizeWishlistItem).filter(Boolean)
+    : [];
+
+  localStorage.setItem(
+    getStorageKey(userIdentifier),
+    JSON.stringify(normalized),
+  );
+};
+
+export const getWishlistByUser = async (userIdentifier) => {
+  if (!userIdentifier) return [];
+
+  return readWishlistFromStorage(userIdentifier);
+};
+
+export const isPackageWishlisted = async (userIdentifier, packageId) => {
   if (!userIdentifier || !packageId) return false;
 
-  return getWishlistByUser(userIdentifier).some(
-    (item) => item.id === Number(packageId),
+  const targetPackageId = normalizePackageId(packageId);
+  const wishlist = await getWishlistByUser(userIdentifier);
+
+  return wishlist.some(
+    (item) => normalizePackageId(item._id) === targetPackageId,
   );
 };
 
-export const addWishlistForUser = (userIdentifier, packageData) => {
-  if (!userIdentifier || !packageData) return;
+export const addWishlistForUser = async (userIdentifier, packageData) => {
+  if (!userIdentifier || !packageData) return null;
 
-  const currentWishlist = getWishlistByUser(userIdentifier);
+  const currentWishlist = readWishlistFromStorage(userIdentifier);
+  const packageId = normalizePackageId(packageData._id || packageData.id);
+
   const alreadySaved = currentWishlist.some(
-    (item) => item.id === packageData.id,
+    (item) =>
+      normalizePackageId(item._id || item.id || item.packageId) === packageId,
   );
 
-  if (alreadySaved) return;
+  if (alreadySaved) return currentWishlist;
 
-  const wishlistItem = {
-    wishlistId: `${packageData.id}-${Date.now()}`,
-    addedAt: new Date().toISOString(),
-    ...packageData,
-  };
+  const nextWishlist = [
+    {
+      ...packageData,
+      _id: packageId,
+      addedAt: new Date().toISOString(),
+    },
+    ...currentWishlist,
+  ];
 
-  localStorage.setItem(
-    getWishlistKey(userIdentifier),
-    JSON.stringify([wishlistItem, ...currentWishlist]),
-  );
+  writeWishlistToStorage(userIdentifier, nextWishlist);
+  return nextWishlist;
 };
 
-export const removeWishlistForUser = (userIdentifier, packageId) => {
-  if (!userIdentifier || !packageId) return;
+export const removeWishlistForUser = async (userIdentifier, packageId) => {
+  if (!userIdentifier || !packageId) return null;
 
-  const currentWishlist = getWishlistByUser(userIdentifier);
+  const targetPackageId = normalizePackageId(packageId);
+  const currentWishlist = readWishlistFromStorage(userIdentifier);
   const nextWishlist = currentWishlist.filter(
-    (item) => item.id !== Number(packageId),
+    (item) =>
+      normalizePackageId(item._id || item.id || item.packageId) !==
+      targetPackageId,
   );
 
-  localStorage.setItem(
-    getWishlistKey(userIdentifier),
-    JSON.stringify(nextWishlist),
-  );
+  writeWishlistToStorage(userIdentifier, nextWishlist);
+  return nextWishlist;
 };

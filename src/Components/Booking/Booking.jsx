@@ -1,5 +1,5 @@
-import React, { useContext, useState } from "react";
-import { Link } from "react-router-dom";
+import React, { useContext, useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import AuthContext from "../../Contextx/AuthContext/AuthContext";
 import {
   getBookingsByUser,
@@ -12,8 +12,12 @@ import {
 
 const Booking = () => {
   const { user } = useContext(AuthContext) || {};
-  const userIdentifier = user?.uid || user?.email;
-  const [, setRefreshTick] = useState(0);
+  const navigate = useNavigate();
+  const userIdentifier = user?.email || user?.uid;
+  const [bookings, setBookings] = useState([]);
+  const [wishlist, setWishlist] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   const [bookingToDelete, setBookingToDelete] = useState(null);
 
   const bdtFormatter = new Intl.NumberFormat("en-BD", {
@@ -22,43 +26,66 @@ const Booking = () => {
     maximumFractionDigits: 0,
   });
 
-  const bookings = getBookingsByUser(userIdentifier);
-  const wishlist = getWishlistByUser(userIdentifier);
+  const loadTravelLists = async () => {
+    try {
+      setLoading(true);
+      setError("");
 
-  const handleRemoveWish = (packageId) => {
-    removeWishlistForUser(userIdentifier, packageId);
-    setRefreshTick((current) => current + 1);
+      const [nextBookings, nextWishlist] = await Promise.all([
+        getBookingsByUser(userIdentifier),
+        getWishlistByUser(userIdentifier),
+      ]);
+
+      setBookings(nextBookings || []);
+      setWishlist(nextWishlist || []);
+    } catch (loadError) {
+      setError(loadError?.message || "Failed to load travel lists.");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleRemoveBooking = (bookingId) => {
-    removeBookingForUser(userIdentifier, bookingId);
-    setRefreshTick((current) => current + 1);
+  useEffect(() => {
+    loadTravelLists();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userIdentifier]);
+
+  const handleRemoveWish = async (packageId) => {
+    await removeWishlistForUser(userIdentifier, packageId);
+    await loadTravelLists();
+  };
+
+  const handleRemoveBooking = async (bookingId) => {
+    await removeBookingForUser(bookingId);
     setBookingToDelete(null);
+    await loadTravelLists();
   };
 
-  const requestRemoveBooking = (booking) => {
-    setBookingToDelete(booking);
+  const handleGoToPayment = (booking) => {
+    navigate("/payment", {
+      state: { booking },
+    });
   };
 
-  const cancelRemoveBooking = () => {
-    setBookingToDelete(null);
-  };
-
-  const renderPackageCard = (item, type) => (
+  const renderBookingCard = (item, type) => (
     <article
-      key={item.bookingId || item.wishlistId || item.id}
+      key={item._id || item.bookingId || item.wishlistId || item.id}
       className="overflow-hidden rounded-2xl border border-cyan-100 bg-white/95 shadow-md"
     >
       <img
-        src={item.image}
-        alt={item.title}
+        src={item.packageImage || item.image || item.image2}
+        alt={item.packageName || item.title}
         className="h-44 w-full object-cover"
       />
       <div className="p-5">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <h2 className="text-xl font-bold text-slate-800">{item.title}</h2>
-            <p className="mt-1 text-slate-600">{item.location}</p>
+            <h2 className="text-xl font-bold text-slate-800">
+              {item.packageName || item.title}
+            </h2>
+            <p className="mt-1 text-slate-600">
+              {item.packageLocation || item.location}
+            </p>
           </div>
           <div className="ml-auto flex items-center gap-2">
             <span
@@ -74,8 +101,8 @@ const Booking = () => {
               type="button"
               onClick={() =>
                 type === "booking"
-                  ? requestRemoveBooking(item)
-                  : handleRemoveWish(item.id)
+                  ? setBookingToDelete(item)
+                  : handleRemoveWish(item._id || item.id)
               }
               className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-rose-200 bg-rose-50 text-rose-600 transition hover:bg-rose-100"
               aria-label={`Remove from ${type}`}
@@ -114,46 +141,73 @@ const Booking = () => {
           </div>
         </div>
 
-        <p className="mt-2 text-sm text-slate-500">{item.duration}</p>
+        <p className="mt-2 text-sm text-slate-500">
+          {type === "booking"
+            ? `Booked on ${new Date(item.bookingDate).toLocaleDateString("en-GB")}`
+            : item.duration || "Saved for later"}
+        </p>
         <p className="mt-3 text-lg font-bold text-emerald-700">
-          {bdtFormatter.format(item.priceBdt)}
+          {bdtFormatter.format(
+            Number(item.totalPrice || item.packagePrice || item.priceBdt || 0),
+          )}
         </p>
 
         {type === "booking" && (
           <div className="mt-3 space-y-1 text-sm text-slate-600">
             <p>
               Travelers:{" "}
-              <span className="font-semibold">{item.travelerCount || 1}</span>
-            </p>
-            {item.totalPrice && (
-              <p>
-                Total Paid:{" "}
-                <span className="font-semibold">
-                  {bdtFormatter.format(item.totalPrice)}
-                </span>
-              </p>
-            )}
-            {item.paymentStatus && (
-              <p>
-                Status:{" "}
-                <span className="font-semibold text-emerald-700">
-                  {item.paymentStatus}
-                </span>
-              </p>
-            )}
-            <p>
-              Agency Contact:{" "}
-              <span className="font-semibold text-cyan-900">
-                +880 1516503901
+              <span className="font-semibold">
+                {item.numberOfTravelers || 1}
               </span>
             </p>
+            <p>
+              Travel Date:{" "}
+              <span className="font-semibold">
+                {item.travelDate || "Not set"}
+              </span>
+            </p>
+            <p>
+              Status:{" "}
+              <span className="font-semibold text-emerald-700">
+                {item.status || "confirmed"}
+              </span>
+            </p>
+            <p>
+              Payment Status:{" "}
+              <span className="font-semibold text-cyan-900">
+                {item.paymentStatus || "pending"}
+              </span>
+            </p>
+            {item.transactionId && (
+              <p>
+                Transaction:{" "}
+                <span className="font-semibold">{item.transactionId}</span>
+              </p>
+            )}
+            {item.specialRequests && (
+              <p>
+                Requests:{" "}
+                <span className="font-semibold">{item.specialRequests}</span>
+              </p>
+            )}
+
+            {String(item.paymentStatus || "pending").toLowerCase() ===
+              "pending" && (
+              <button
+                type="button"
+                onClick={() => handleGoToPayment(item)}
+                className="mt-3 inline-flex rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700"
+              >
+                Payment
+              </button>
+            )}
           </div>
         )}
 
-        {type === "wishlist" && item.id && (
+        {type === "wishlist" && (item._id || item.id) && (
           <div className="mt-4 flex items-center gap-2">
             <Link
-              to={`/packages/${item.id}`}
+              to={`/packages/${item._id || item.id}`}
               className="inline-flex rounded-lg bg-cyan-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-cyan-800"
             >
               Package Details
@@ -171,58 +225,76 @@ const Booking = () => {
           My Travel Lists
         </h1>
         <p className="mb-8 text-slate-600">
-          View both your confirmed bookings and the packages you saved for the
+          View your confirmed bookings and the packages you saved for the
           future.
         </p>
 
-        <section className="mb-12">
-          <div className="mb-5 flex items-center justify-between gap-3">
-            <h2 className="text-2xl font-bold text-slate-800">Booking List</h2>
-            <span className="rounded-full bg-emerald-100 px-3 py-1 text-sm font-semibold text-emerald-700">
-              {bookings.length} items
-            </span>
+        {loading ? (
+          <div className="rounded-2xl border border-cyan-100 bg-white/95 p-8 text-center shadow-lg">
+            <p className="text-lg font-semibold text-slate-700">
+              Loading your travel lists...
+            </p>
           </div>
-
-          {!bookings.length ? (
-            <div className="rounded-2xl border border-cyan-100 bg-white/95 p-8 text-center shadow-lg">
-              <p className="text-lg font-semibold text-slate-700">
-                No bookings found yet.
-              </p>
-              <p className="mt-2 text-slate-600">
-                Book a package from the package details page to see it here.
-              </p>
-            </div>
-          ) : (
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {bookings.map((booking) => renderPackageCard(booking, "booking"))}
-            </div>
-          )}
-        </section>
-
-        <section>
-          <div className="mb-5 flex items-center justify-between gap-3">
-            <h2 className="text-2xl font-bold text-slate-800">Wish List</h2>
-            <span className="rounded-full bg-rose-100 px-3 py-1 text-sm font-semibold text-rose-700">
-              {wishlist.length} items
-            </span>
+        ) : error ? (
+          <div className="rounded-2xl border border-red-200 bg-white/95 p-8 text-center shadow-lg">
+            <p className="text-lg font-semibold text-red-600">{error}</p>
           </div>
+        ) : (
+          <>
+            <section className="mb-12">
+              <div className="mb-5 flex items-center justify-between gap-3">
+                <h2 className="text-2xl font-bold text-slate-800">
+                  Booking List
+                </h2>
+                <span className="rounded-full bg-emerald-100 px-3 py-1 text-sm font-semibold text-emerald-700">
+                  {bookings.length} items
+                </span>
+              </div>
 
-          {!wishlist.length ? (
-            <div className="rounded-2xl border border-rose-100 bg-white/95 p-8 text-center shadow-lg">
-              <p className="text-lg font-semibold text-slate-700">
-                No wishlist packages yet.
-              </p>
-              <p className="mt-2 text-slate-600">
-                Use the wish button on package details to save a location for
-                future tours.
-              </p>
-            </div>
-          ) : (
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {wishlist.map((item) => renderPackageCard(item, "wishlist"))}
-            </div>
-          )}
-        </section>
+              {!bookings.length ? (
+                <div className="rounded-2xl border border-cyan-100 bg-white/95 p-8 text-center shadow-lg">
+                  <p className="text-lg font-semibold text-slate-700">
+                    No bookings found yet.
+                  </p>
+                  <p className="mt-2 text-slate-600">
+                    Book a package from the package details page to see it here.
+                  </p>
+                </div>
+              ) : (
+                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                  {bookings.map((booking) =>
+                    renderBookingCard(booking, "booking"),
+                  )}
+                </div>
+              )}
+            </section>
+
+            <section>
+              <div className="mb-5 flex items-center justify-between gap-3">
+                <h2 className="text-2xl font-bold text-slate-800">Wish List</h2>
+                <span className="rounded-full bg-rose-100 px-3 py-1 text-sm font-semibold text-rose-700">
+                  {wishlist.length} items
+                </span>
+              </div>
+
+              {!wishlist.length ? (
+                <div className="rounded-2xl border border-rose-100 bg-white/95 p-8 text-center shadow-lg">
+                  <p className="text-lg font-semibold text-slate-700">
+                    No wishlist packages yet.
+                  </p>
+                  <p className="mt-2 text-slate-600">
+                    Use the wish button on package details to save a location
+                    for future tours.
+                  </p>
+                </div>
+              ) : (
+                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                  {wishlist.map((item) => renderBookingCard(item, "wishlist"))}
+                </div>
+              )}
+            </section>
+          </>
+        )}
 
         {bookingToDelete && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 px-4">
@@ -233,7 +305,7 @@ const Booking = () => {
               <p className="mt-3 text-slate-600">
                 Are you sure you want to remove
                 <span className="font-semibold text-slate-800">
-                  {` ${bookingToDelete.title}`}
+                  {` ${bookingToDelete.packageName || bookingToDelete.title}`}
                 </span>
                 from your booking list?
               </p>
@@ -241,14 +313,14 @@ const Booking = () => {
               <div className="mt-6 flex justify-end gap-3">
                 <button
                   type="button"
-                  onClick={cancelRemoveBooking}
+                  onClick={() => setBookingToDelete(null)}
                   className="rounded-lg border border-slate-300 px-4 py-2 font-semibold text-slate-700 hover:bg-slate-100"
                 >
                   Cancel
                 </button>
                 <button
                   type="button"
-                  onClick={() => handleRemoveBooking(bookingToDelete.bookingId)}
+                  onClick={() => handleRemoveBooking(bookingToDelete._id)}
                   className="rounded-lg bg-rose-600 px-4 py-2 font-semibold text-white hover:bg-rose-700"
                 >
                   Delete
