@@ -16,6 +16,7 @@ import PackageDetails from "./Components/PackageDetails/PackageDetails.jsx";
 import Ledger from "./Components/Ledger/Ledger.jsx";
 import Payment from "./Components/Payment/Payment.jsx";
 import Profile from "./Components/Profile/Profile.jsx";
+import UpdateProfile from "./Components/UpdateProfile/UpdateProfile.jsx";
 
 const PACKAGES_API_URL = "http://localhost:3000/packages";
 const BLOGS_API_URL = "http://localhost:3000/blogs";
@@ -161,10 +162,18 @@ const router = createBrowserRouter([
         loader: loadBlogs,
       },
       {
-        path: "/Profile",
+        path: "/profile",
         Component: () => (
           <PrivateRoutes>
             <Profile />
+          </PrivateRoutes>
+        ),
+      },
+      {
+        path: "/update-profile",
+        Component: () => (
+          <PrivateRoutes>
+            <UpdateProfile />
           </PrivateRoutes>
         ),
       },
