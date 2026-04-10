@@ -85,8 +85,9 @@ const Dashboard = () => {
       (booking) =>
         String(booking?.paymentStatus || "").toLowerCase() === "paid",
     );
-    const confirmedBookings = bookings.filter(
-      (booking) => String(booking?.status || "").toLowerCase() === "confirmed",
+    const unpaidBookings = bookings.filter(
+      (booking) =>
+        String(booking?.paymentStatus || "").toLowerCase() !== "paid",
     );
 
     const totalRevenue = paidBookings.reduce(
@@ -99,6 +100,8 @@ const Dashboard = () => {
     const bookingsPerUser = totalUsers > 0 ? totalBookings / totalUsers : 0;
     const conversionRate =
       totalUsers > 0 ? (totalBookings / totalUsers) * 100 : 0;
+    const paymentCompletionRate =
+      totalBookings > 0 ? (paidBookings.length / totalBookings) * 100 : 0;
 
     const packageNameMap = new Map(
       packages.map((pkg) => [
@@ -163,7 +166,8 @@ const Dashboard = () => {
       totalUsers,
       totalBookings,
       paidBookings: paidBookings.length,
-      confirmedBookings: confirmedBookings.length,
+      unpaidBookings: unpaidBookings.length,
+      paymentCompletionRate,
       totalRevenue,
       avgBookingValue,
       bookingsPerUser,
@@ -233,10 +237,10 @@ const Dashboard = () => {
             </div>
             <div className="rounded-xl border border-cyan-200 bg-cyan-50 p-4">
               <p className="text-xs font-semibold text-cyan-700 uppercase">
-                Confirmed Bookings
+                Unpaid Bookings
               </p>
               <p className="mt-1 text-2xl font-black text-cyan-900">
-                {analytics.confirmedBookings}
+                {analytics.unpaidBookings}
               </p>
             </div>
           </div>
@@ -268,10 +272,10 @@ const Dashboard = () => {
             </div>
             <div className="rounded-xl border border-violet-200 bg-violet-50 p-4">
               <p className="text-xs font-semibold text-violet-700 uppercase">
-                Conversion Rate
+                Payment Completion
               </p>
               <p className="mt-1 text-xl font-black text-violet-900">
-                {analytics.conversionRate.toFixed(1)}%
+                {analytics.paymentCompletionRate.toFixed(1)}%
               </p>
             </div>
           </div>

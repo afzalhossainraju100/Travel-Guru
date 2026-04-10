@@ -2,9 +2,11 @@ import React, { useContext, useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import AuthContext from "../../Contextx/AuthContext/AuthContext";
 import {
+  getAllBookings,
   getBookingsByUser,
   removeBookingForUser,
 } from "../../services/bookingService";
+import { fetchUserByEmail } from "../../services/userService";
 import {
   getWishlistByUser,
   removeWishlistForUser,
@@ -14,6 +16,7 @@ const Booking = () => {
   const { user } = useContext(AuthContext) || {};
   const navigate = useNavigate();
   const userIdentifier = user?.email || user?.uid;
+  const [viewerRole, setViewerRole] = useState("user");
   const [bookings, setBookings] = useState([]);
   const [wishlist, setWishlist] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -31,8 +34,19 @@ const Booking = () => {
       setLoading(true);
       setError("");
 
+      const viewerProfile = user?.email
+        ? await fetchUserByEmail(user.email)
+        : null;
+      const normalizedRole = String(viewerProfile?.role || "user")
+        .trim()
+        .toLowerCase();
+      const isAdminViewer =
+        normalizedRole === "admin" || normalizedRole === "administrator";
+
+      setViewerRole(isAdminViewer ? "admin" : "user");
+
       const [nextBookings, nextWishlist] = await Promise.all([
-        getBookingsByUser(userIdentifier),
+        isAdminViewer ? getAllBookings() : getBookingsByUser(userIdentifier),
         getWishlistByUser(userIdentifier),
       ]);
 
@@ -56,6 +70,11 @@ const Booking = () => {
   };
 
   const handleRemoveBooking = async (bookingId) => {
+    if (viewerRole !== "admin") {
+      setError("Only admin can remove booking information.");
+      return;
+    }
+
     await removeBookingForUser(bookingId);
     setBookingToDelete(null);
     await loadTravelLists();
@@ -97,47 +116,49 @@ const Booking = () => {
             >
               {type === "booking" ? "Booked" : "Wishlist"}
             </span>
-            <button
-              type="button"
-              onClick={() =>
-                type === "booking"
-                  ? setBookingToDelete(item)
-                  : handleRemoveWish(item._id || item.id)
-              }
-              className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-rose-200 bg-rose-50 text-rose-600 transition hover:bg-rose-100"
-              aria-label={`Remove from ${type}`}
-              title="Remove"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                className="h-4 w-4"
+            {(type === "wishlist" || viewerRole === "admin") && (
+              <button
+                type="button"
+                onClick={() =>
+                  type === "booking"
+                    ? setBookingToDelete(item)
+                    : handleRemoveWish(item._id || item.id)
+                }
+                className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-rose-200 bg-rose-50 text-rose-600 transition hover:bg-rose-100"
+                aria-label={`Remove from ${type}`}
+                title="Remove"
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M3 6h18"
-                />
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M8 6V4h8v2"
-                />
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M19 6l-1 14H6L5 6"
-                />
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M10 11v6M14 11v6"
-                />
-              </svg>
-            </button>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  className="h-4 w-4"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M3 6h18"
+                  />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M8 6V4h8v2"
+                  />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M19 6l-1 14H6L5 6"
+                  />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M10 11v6M14 11v6"
+                  />
+                </svg>
+              </button>
+            )}
           </div>
         </div>
 
@@ -154,6 +175,14 @@ const Booking = () => {
 
         {type === "booking" && (
           <div className="mt-3 space-y-1 text-sm text-slate-600">
+            {viewerRole === "admin" ? (
+              <p>
+                Customer:{" "}
+                <span className="font-semibold">
+                  {item.userName || item.userId || "Unknown"}
+                </span>
+              </p>
+            ) : null}
             <p>
               Travelers:{" "}
               <span className="font-semibold">
@@ -222,11 +251,12 @@ const Booking = () => {
     <div className="min-h-screen bg-linear-to-b from-sky-100 via-cyan-50 to-white px-4 py-12">
       <div className="mx-auto max-w-6xl">
         <h1 className="mb-3 text-3xl font-extrabold text-slate-800 md:text-4xl">
-          My Travel Lists
+          {viewerRole === "admin" ? "All Booking Records" : "My Travel Lists"}
         </h1>
         <p className="mb-8 text-slate-600">
-          View your confirmed bookings and the packages you saved for the
-          future.
+          {viewerRole === "admin"
+            ? "Review all customer bookings for operational and revenue decisions."
+            : "View your confirmed bookings and the packages you saved for the future."}
         </p>
 
         {loading ? (
@@ -244,7 +274,7 @@ const Booking = () => {
             <section className="mb-12">
               <div className="mb-5 flex items-center justify-between gap-3">
                 <h2 className="text-2xl font-bold text-slate-800">
-                  Booking List
+                  {viewerRole === "admin" ? "All Bookings" : "Booking List"}
                 </h2>
                 <span className="rounded-full bg-emerald-100 px-3 py-1 text-sm font-semibold text-emerald-700">
                   {bookings.length} items
@@ -296,7 +326,7 @@ const Booking = () => {
           </>
         )}
 
-        {bookingToDelete && (
+        {viewerRole === "admin" && bookingToDelete && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 px-4">
             <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl">
               <h3 className="text-xl font-bold text-slate-800">

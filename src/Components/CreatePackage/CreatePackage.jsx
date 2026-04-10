@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 const PACKAGES_API_URL = "http://localhost:3000/packages";
 
@@ -49,7 +50,28 @@ const splitCommaValues = (value) => {
     .filter(Boolean);
 };
 
+const isWriteResult = (payload) => {
+  if (!payload || typeof payload !== "object") return false;
+
+  return (
+    "acknowledged" in payload ||
+    "matchedCount" in payload ||
+    "modifiedCount" in payload ||
+    "upsertedId" in payload
+  );
+};
+
+const isSuccessfulWriteResult = (payload) => {
+  if (!isWriteResult(payload)) return false;
+
+  const matchedCount = Number(payload.matchedCount || 0);
+  const modifiedCount = Number(payload.modifiedCount || 0);
+
+  return matchedCount > 0 || modifiedCount > 0 || Boolean(payload.upsertedId);
+};
+
 const CreatePackage = ({ isAdmin = false }) => {
+  const navigate = useNavigate();
   const [packages, setPackages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -94,6 +116,16 @@ const CreatePackage = ({ isAdmin = false }) => {
   const onChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const openPackageDetails = (pkg) => {
+    const id = resolveId(pkg?._id || pkg?.id);
+    if (!id) {
+      setError("Package ID not found.");
+      return;
+    }
+
+    navigate(`/packages/${id}`);
   };
 
   const buildPayload = () => {
@@ -159,23 +191,51 @@ const CreatePackage = ({ isAdmin = false }) => {
       const endpoint = editingId
         ? `${PACKAGES_API_URL}/${editingId}`
         : PACKAGES_API_URL;
-      const method = editingId ? "PATCH" : "POST";
+      const method = editingId ? "PUT" : "POST";
 
       // Let MongoDB generate unique _id for new package.
       if (!editingId) {
         delete payload._id;
         delete payload.id;
+      } else {
+        payload._id = editingId;
+        payload.id = editingId;
       }
 
-      const response = await fetch(endpoint, {
-        method,
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      });
+      const sendRequest = async (requestMethod) => {
+        const response = await fetch(endpoint, {
+          method: requestMethod,
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(payload),
+        });
 
-      if (!response.ok) {
+        let data = null;
+        try {
+          data = await response.json();
+        } catch {
+          data = null;
+        }
+
+        return { response, data };
+      };
+
+      let result = await sendRequest(method);
+
+      if (
+        editingId &&
+        (!result.response.ok ||
+          (isWriteResult(result.data) && !isSuccessfulWriteResult(result.data)))
+      ) {
+        result = await sendRequest("PATCH");
+      }
+
+      if (!result.response.ok) {
+        throw new Error("Save failed");
+      }
+
+      if (isWriteResult(result.data) && !isSuccessfulWriteResult(result.data)) {
         throw new Error("Save failed");
       }
 
@@ -521,10 +581,20 @@ const CreatePackage = ({ isAdmin = false }) => {
           <div className="mt-3 grid gap-3">
             {packages.map((pkg) => {
               const id = resolveId(pkg?._id || pkg?.id);
+
               return (
                 <div
                   key={id || pkg?.title}
-                  className="rounded-xl border border-slate-200 bg-slate-50 p-4"
+                  onClick={() => openPackageDetails(pkg)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      openPackageDetails(pkg);
+                    }
+                  }}
+                  className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-left transition hover:-translate-y-0.5 hover:border-cyan-300 hover:bg-cyan-50"
                 >
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div>
@@ -542,14 +612,20 @@ const CreatePackage = ({ isAdmin = false }) => {
                     <div className="flex gap-2">
                       <button
                         type="button"
-                        onClick={() => onEdit(pkg)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onEdit(pkg);
+                        }}
                         className="rounded-lg bg-cyan-600 px-3 py-2 text-sm font-semibold text-white hover:bg-cyan-700"
                       >
                         Edit
                       </button>
                       <button
                         type="button"
-                        onClick={() => onDelete(pkg)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onDelete(pkg);
+                        }}
                         disabled={deletingId === id}
                         className="rounded-lg bg-rose-600 px-3 py-2 text-sm font-semibold text-white hover:bg-rose-700 disabled:opacity-60"
                       >

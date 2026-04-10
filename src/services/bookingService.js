@@ -49,6 +49,10 @@ const readBookings = async () => {
   return Array.isArray(data) ? data.map(normalizeBooking).filter(Boolean) : [];
 };
 
+export const getAllBookings = async () => {
+  return readBookings();
+};
+
 export const getBookingsByUser = async (userId) => {
   if (!userId) return [];
 

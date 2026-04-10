@@ -47,14 +47,14 @@ const AdminProfile = ({ profile }) => {
             </span>
           </div>
 
-          <div className="mt-4">
+          {/* <div className="mt-4">
             <Link
               to="/update-profile"
               className="inline-flex items-center rounded-lg bg-cyan-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-cyan-700"
             >
               Update Profile
             </Link>
-          </div>
+          </div> */}
 
           <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
