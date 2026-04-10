@@ -17,8 +17,8 @@ import Ledger from "./Components/Ledger/Ledger.jsx";
 import Payment from "./Components/Payment/Payment.jsx";
 import Profile from "./Components/Profile/Profile.jsx";
 
-
 const PACKAGES_API_URL = "http://localhost:3000/packages";
+const BLOGS_API_URL = "http://localhost:3000/blogs";
 
 const resolvePackageId = (idValue) => {
   if (typeof idValue === "string") return idValue;
@@ -100,6 +100,17 @@ const loadPackageById = async ({ params }) => {
   return packages.find((pkg) => String(pkg._id) === String(params.id)) || null;
 };
 
+const loadBlogs = async () => {
+  const response = await fetch(BLOGS_API_URL);
+
+  if (!response.ok) {
+    throw new Error("Failed to load blogs from API.");
+  }
+
+  const data = await response.json();
+  return Array.isArray(data) ? data : [];
+};
+
 const router = createBrowserRouter([
   {
     path: "/",
@@ -146,11 +157,8 @@ const router = createBrowserRouter([
       },
       {
         path: "/blog",
-        Component: () => (
-          <PrivateRoutes>
-            <Blog />
-          </PrivateRoutes>
-        ),
+        Component: Blog,
+        loader: loadBlogs,
       },
       {
         path: "/Profile",

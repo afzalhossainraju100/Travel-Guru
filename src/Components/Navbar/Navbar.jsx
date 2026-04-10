@@ -107,6 +107,15 @@ const Navbar = () => {
           All Packages
         </NavLink>
       </li>
+      <li>
+        <NavLink
+          to="/blog"
+          onClick={() => setMenuOpen(false)}
+          className={(state) => getNavLinkClass(state, "text-black")}
+        >
+          Blog
+        </NavLink>
+      </li>
 
       {user && (
         <>
@@ -117,15 +126,6 @@ const Navbar = () => {
               className={(state) => getNavLinkClass(state, "text-black")}
             >
               Booking Info
-            </NavLink>
-          </li>
-          <li>
-            <NavLink
-              to="/blog"
-              onClick={() => setMenuOpen(false)}
-              className={(state) => getNavLinkClass(state, "text-black")}
-            >
-              Blog
             </NavLink>
           </li>
           <li>
