@@ -4,6 +4,7 @@ import AuthContext from "../../Contextx/AuthContext/AuthContext";
 import { fetchUserByEmail, updateUserById } from "../../services/userService";
 
 const TRAVEL_STYLES = [
+  "",
   "Budget",
   "Comfort",
   "Luxury",
@@ -17,7 +18,18 @@ const TRAVEL_STYLES = [
   "N/A",
 ];
 
-const UpdateProfile = () => {
+const PREFERENCES = [
+  "Rivers",
+  "Photography",
+  "Nature",
+  "Beach",
+  "Mountains",
+  "Culture",
+  "Food",
+  "Adventure",
+];
+
+const Update = () => {
   const { user } = useContext(AuthContext) || {};
   const navigate = useNavigate();
 
@@ -31,7 +43,7 @@ const UpdateProfile = () => {
     phoneNumber: "",
     address: "",
     profileImage: "",
-    travelStyle: "N/A",
+    travelStyle: "",
     preferences: [],
   });
 
@@ -45,25 +57,23 @@ const UpdateProfile = () => {
       }
 
       try {
-        const profileData = await fetchUserByEmail(user.email);
+        const data = await fetchUserByEmail(user.email);
         if (!active) return;
 
-        if (!profileData) {
+        if (!data) {
           setError("Profile not found for this account.");
           setLoading(false);
           return;
         }
 
-        setProfile(profileData);
+        setProfile(data);
         setFormData({
-          name: profileData.name || "",
-          phoneNumber: profileData.phoneNumber || "",
-          address: profileData.address || "",
-          profileImage: profileData.profileImage || "",
-          travelStyle: profileData.travelStyle || "N/A",
-          preferences: Array.isArray(profileData.preferences)
-            ? profileData.preferences
-            : [],
+          name: data.name || "",
+          phoneNumber: data.phoneNumber || "",
+          address: data.address || "",
+          profileImage: data.profileImage || "",
+          travelStyle: data.travelStyle || "",
+          preferences: Array.isArray(data.preferences) ? data.preferences : [],
         });
       } catch {
         if (active) setError("Failed to load profile data.");
@@ -79,25 +89,22 @@ const UpdateProfile = () => {
     };
   }, [user?.email]);
 
-  const handleChange = (event) => {
-    const { name, value } = event.target;
+  const onChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const togglePreference = (item) => {
     setFormData((prev) => ({
       ...prev,
-      [name]: value,
+      preferences: prev.preferences.includes(item)
+        ? prev.preferences.filter((p) => p !== item)
+        : [...prev.preferences, item],
     }));
   };
 
-  const handlePreferenceToggle = (option) => {
-    setFormData((prev) => ({
-      ...prev,
-      preferences: prev.preferences.includes(option)
-        ? prev.preferences.filter((item) => item !== option)
-        : [...prev.preferences, option],
-    }));
-  };
-
-  const handleSubmit = async (event) => {
-    event.preventDefault();
+  const onSubmit = async (e) => {
+    e.preventDefault();
     setError("");
     setSuccess("");
     setSubmitting(true);
@@ -108,33 +115,32 @@ const UpdateProfile = () => {
       return;
     }
 
-    const targetUserId = profile?._id || profile?.id;
-    if (!targetUserId) {
-      setError("Profile ID not found.");
+    const userId = profile?._id || profile?.id;
+    if (!userId) {
+      setError("User ID not found.");
       setSubmitting(false);
       return;
     }
 
-    const updates = {
-      name: formData.name.trim(),
-      phoneNumber: formData.phoneNumber.trim(),
-      address: formData.address.trim(),
-      profileImage: formData.profileImage.trim(),
-      travelStyle: formData.travelStyle,
-      preferences: Array.isArray(formData.preferences)
-        ? formData.preferences
-        : [],
-    };
-
     try {
-      const updated = await updateUserById(targetUserId, updates);
+      const updated = await updateUserById(userId, {
+        name: formData.name.trim(),
+        phoneNumber: formData.phoneNumber.trim(),
+        address: formData.address.trim(),
+        profileImage: formData.profileImage.trim(),
+        travelStyle: formData.travelStyle,
+        preferences: Array.isArray(formData.preferences)
+          ? formData.preferences
+          : [],
+      });
+
       if (!updated) {
         setError("Failed to update profile. Please try again.");
         return;
       }
 
       setSuccess("Profile updated successfully!");
-      setTimeout(() => navigate("/profile"), 800);
+      setTimeout(() => navigate("/profile"), 900);
     } catch {
       setError("Failed to update profile. Please try again.");
     } finally {
@@ -142,31 +148,29 @@ const UpdateProfile = () => {
     }
   };
 
-  if (loading) {
-    return <div className="p-6">Loading profile...</div>;
-  }
+  if (loading) return <div className="p-6">Loading profile...</div>;
 
   return (
     <section className="mx-auto max-w-3xl px-4 py-10">
-      <div className="rounded-xl border border-cyan-100 bg-white p-6 shadow-sm">
+      <div className="rounded-2xl border border-cyan-100 bg-white p-6 shadow-sm">
         <h1 className="text-2xl font-bold text-slate-900">Update Profile</h1>
         <p className="mt-1 text-sm text-slate-600">
-          Complete your profile information after sign up.
+          Update your profile information and save it to database.
         </p>
 
         {error ? (
-          <div className="mt-4 rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">
+          <p className="mt-4 rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">
             {error}
-          </div>
+          </p>
         ) : null}
 
         {success ? (
-          <div className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-700">
+          <p className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-700">
             {success}
-          </div>
+          </p>
         ) : null}
 
-        <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
+        <form onSubmit={onSubmit} className="mt-6 space-y-4">
           <div>
             <label className="block text-sm font-semibold text-slate-700">
               Name
@@ -174,8 +178,8 @@ const UpdateProfile = () => {
             <input
               name="name"
               value={formData.name}
-              onChange={handleChange}
-              className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
+              onChange={onChange}
+              className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-black"
               placeholder="Your full name"
               required
             />
@@ -188,7 +192,7 @@ const UpdateProfile = () => {
             <input
               value={profile?.email || user?.email || ""}
               disabled
-              className="mt-1 w-full rounded-lg border border-slate-300 bg-slate-100 px-3 py-2 text-slate-500"
+              className="mt-1 w-full rounded-lg border border-slate-300 bg-slate-100 px-3 py-2 text-black"
             />
           </div>
 
@@ -200,8 +204,8 @@ const UpdateProfile = () => {
               <input
                 name="phoneNumber"
                 value={formData.phoneNumber}
-                onChange={handleChange}
-                className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
+                onChange={onChange}
+                className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-black"
                 placeholder="+8801XXXXXXXXX"
               />
             </div>
@@ -212,12 +216,12 @@ const UpdateProfile = () => {
               <select
                 name="travelStyle"
                 value={formData.travelStyle}
-                onChange={handleChange}
-                className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
+                onChange={onChange}
+                className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-black"
               >
                 {TRAVEL_STYLES.map((item) => (
-                  <option key={item} value={item}>
-                    {item}
+                  <option key={item || "empty"} value={item}>
+                    {item || "Select travel style"}
                   </option>
                 ))}
               </select>
@@ -231,8 +235,8 @@ const UpdateProfile = () => {
             <input
               name="address"
               value={formData.address}
-              onChange={handleChange}
-              className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
+              onChange={onChange}
+              className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-black"
               placeholder="Your address"
             />
           </div>
@@ -244,8 +248,8 @@ const UpdateProfile = () => {
             <input
               name="profileImage"
               value={formData.profileImage}
-              onChange={handleChange}
-              className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
+              onChange={onChange}
+              className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-black"
               placeholder="https://example.com/photo.jpg"
             />
           </div>
@@ -255,11 +259,11 @@ const UpdateProfile = () => {
               Preferences
             </label>
             <div className="mt-2 flex flex-wrap gap-2">
-              {TRAVEL_STYLES.filter((item) => item !== "N/A").map((item) => (
+              {PREFERENCES.map((item) => (
                 <button
                   key={item}
                   type="button"
-                  onClick={() => handlePreferenceToggle(item)}
+                  onClick={() => togglePreference(item)}
                   className={`rounded-full px-3 py-1 text-xs font-semibold ${
                     formData.preferences.includes(item)
                       ? "bg-cyan-600 text-white"
@@ -272,11 +276,11 @@ const UpdateProfile = () => {
             </div>
           </div>
 
-          <div className="flex gap-3 pt-2">
+          <div className="flex gap-2 pt-2">
             <button
               type="submit"
               disabled={submitting}
-              className="rounded-lg bg-cyan-600 px-4 py-2 font-semibold text-white hover:bg-cyan-700 disabled:opacity-60"
+              className="rounded-lg bg-cyan-700 px-4 py-2 font-semibold text-white hover:bg-cyan-800 disabled:opacity-60"
             >
               {submitting ? "Updating..." : "Update Profile"}
             </button>
@@ -294,4 +298,4 @@ const UpdateProfile = () => {
   );
 };
 
-export default UpdateProfile;
+export default Update;

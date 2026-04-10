@@ -96,6 +96,24 @@ export const updateUserById = async (userId, updates) => {
   return normalizeUser(await response.json());
 };
 
+export const createUserProfile = async (payload) => {
+  if (!payload) return null;
+
+  const response = await fetch(USERS_API_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    return null;
+  }
+
+  return normalizeUser(await response.json());
+};
+
 export const updateUserWishlist = async (userId, wishlist) => {
   if (!userId) return null;
 

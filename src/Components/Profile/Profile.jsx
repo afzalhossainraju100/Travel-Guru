@@ -26,15 +26,14 @@ const Profile = () => {
       setError("");
 
       try {
-        const profileData = await fetchUserByEmail(user.email);
-
+        const data = await fetchUserByEmail(user.email);
         if (!active) return;
 
-        if (!profileData) {
+        if (!data) {
           setError("Profile not found for this account.");
           setProfile(null);
         } else {
-          setProfile(profileData);
+          setProfile(data);
         }
       } catch {
         if (!active) return;
@@ -57,9 +56,17 @@ const Profile = () => {
     [profile?.role],
   );
 
-  if (loading) return <div className="p-6">Loading profile...</div>;
-  if (error) return <div className="p-6 text-rose-600">{error}</div>;
-  if (!profile) return <div className="p-6">No profile data available.</div>;
+  if (loading) {
+    return <div className="p-6">Loading profile...</div>;
+  }
+
+  if (error) {
+    return <div className="p-6 text-rose-600">{error}</div>;
+  }
+
+  if (!profile) {
+    return <div className="p-6">No profile data available.</div>;
+  }
 
   return role === "admin" ? (
     <AdminProfile profile={profile} />

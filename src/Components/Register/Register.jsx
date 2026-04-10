@@ -1,27 +1,63 @@
-import React, { useContext } from "react";
-import { Link } from "react-router-dom";
+import React, { useContext, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import AuthContext from "../../Contextx/AuthContext/AuthContext";
 import HomeBg from "../../assets/images/Rectangle1.png";
+import { createUserProfile } from "../../services/userService";
 // import { createUserWithEmailAndPassword } from "firebase/auth";
 // import { auth } from '../../Firebase/Firebase.init';
 
 const Register = () => {
   const { createUser } = useContext(AuthContext);
+  const navigate = useNavigate();
+  const [submitError, setSubmitError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
-  const handleRegister = (e) => {
+  const handleRegister = async (e) => {
     e.preventDefault();
-    const email = e.target.email.value;
+    setSubmitError("");
+    setSubmitting(true);
+
+    const email = e.target.email.value.trim();
     const password = e.target.password.value;
 
-    createUser(email, password)
-      .then((result) => {
-        const user = result.user;
-        console.log(user);
-        e.target.reset();
-      })
-      .catch((error) => {
-        alert(error.message);
-      });
+    if (!email || !password) {
+      setSubmitError("Email and password are required.");
+      setSubmitting(false);
+      return;
+    }
+
+    try {
+      await createUser(email, password);
+
+      const payload = {
+        name: "",
+        email,
+        // Backend should hash this password before persisting.
+        password,
+        phoneNumber: "",
+        address: "",
+        profileImage: "",
+        role: "user",
+        travelStyle: "",
+        preferences: [],
+        wishlist: [],
+        bookingHistory: [],
+        createdAt: new Date().toISOString(),
+      };
+
+      const saved = await createUserProfile(payload);
+      if (!saved) {
+        setSubmitError("Account created, but failed to save user in database.");
+        return;
+      }
+
+      e.target.reset();
+      navigate("/profile");
+    } catch (error) {
+      setSubmitError(error?.message || "Registration failed.");
+    } finally {
+      setSubmitting(false);
+    }
   };
   // const handleRegister = (e) =>{
   //     e.preventDefault();
@@ -62,6 +98,7 @@ const Register = () => {
                   type="email"
                   className="input input-bordered bg-white/95 text-black"
                   placeholder="Email"
+                  required
                 />
                 <label className="label text-slate-700">Password</label>
                 <input
@@ -69,17 +106,27 @@ const Register = () => {
                   type="password"
                   className="input input-bordered bg-white/95 text-black"
                   placeholder="Password"
+                  minLength={6}
+                  required
                 />
                 <div>
                   <a className="link link-hover text-cyan-900">
                     Forgot password?
                   </a>
                 </div>
-                <button className="btn mt-4 border-none bg-cyan-900 text-white hover:bg-cyan-800">
-                  Register
+                <button
+                  disabled={submitting}
+                  className="btn mt-4 border-none bg-cyan-900 text-white hover:bg-cyan-800 disabled:opacity-60"
+                >
+                  {submitting ? "Signing up..." : "Register"}
                 </button>
               </fieldset>
             </form>
+            {submitError ? (
+              <p className="mt-2 text-sm font-medium text-rose-700">
+                {submitError}
+              </p>
+            ) : null}
             <p className="text-slate-700">
               Already have an account?{" "}
               <Link

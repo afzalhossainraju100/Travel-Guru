@@ -16,7 +16,7 @@ import PackageDetails from "./Components/PackageDetails/PackageDetails.jsx";
 import Ledger from "./Components/Ledger/Ledger.jsx";
 import Payment from "./Components/Payment/Payment.jsx";
 import Profile from "./Components/Profile/Profile.jsx";
-import UpdateProfile from "./Components/UpdateProfile/UpdateProfile.jsx";
+import Update from "./Components/Update/Update.jsx";
 
 const PACKAGES_API_URL = "http://localhost:3000/packages";
 const BLOGS_API_URL = "http://localhost:3000/blogs";
@@ -86,14 +86,15 @@ const normalizePackage = (pkg) => ({
 });
 
 const loadPackages = async () => {
-  const response = await fetch(PACKAGES_API_URL);
+  try {
+    const response = await fetch(PACKAGES_API_URL);
+    if (!response.ok) return [];
 
-  if (!response.ok) {
-    throw new Error("Failed to load packages from API.");
+    const data = await response.json();
+    return Array.isArray(data) ? data.map(normalizePackage) : [];
+  } catch {
+    return [];
   }
-
-  const data = await response.json();
-  return Array.isArray(data) ? data.map(normalizePackage) : [];
 };
 
 const loadPackageById = async ({ params }) => {
@@ -102,14 +103,15 @@ const loadPackageById = async ({ params }) => {
 };
 
 const loadBlogs = async () => {
-  const response = await fetch(BLOGS_API_URL);
+  try {
+    const response = await fetch(BLOGS_API_URL);
+    if (!response.ok) return [];
 
-  if (!response.ok) {
-    throw new Error("Failed to load blogs from API.");
+    const data = await response.json();
+    return Array.isArray(data) ? data : [];
+  } catch {
+    return [];
   }
-
-  const data = await response.json();
-  return Array.isArray(data) ? data : [];
 };
 
 const router = createBrowserRouter([
@@ -173,7 +175,7 @@ const router = createBrowserRouter([
         path: "/update-profile",
         Component: () => (
           <PrivateRoutes>
-            <UpdateProfile />
+            <Update />
           </PrivateRoutes>
         ),
       },
