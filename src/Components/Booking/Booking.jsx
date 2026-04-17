@@ -325,6 +325,43 @@ const Booking = () => {
             </section>
           </>
         )}
+        {viewerRole === "admin" && bookingToDelete && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 px-4">
+            <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl">
+              <h3 className="text-xl font-bold text-slate-800">
+                Confirm Delete
+              </h3>
+              <p className="mt-3 text-slate-600">
+                Are you sure you want to remove
+                <span className="font-semibold text-slate-800">
+                  {` ${bookingToDelete.packageName || bookingToDelete.title}`}
+                </span>
+                from your booking list?
+              </p>
+
+              <div className="mt-6 flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setBookingToDelete(null)}
+                  className="rounded-lg border border-slate-300 px-4 py-2 font-semibold text-slate-700 hover:bg-slate-100"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleRemoveBooking(bookingToDelete._id)}
+                  className="rounded-lg bg-rose-600 px-4 py-2 font-semibold text-white hover:bg-rose-700"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
 
         
   export default Booking;
