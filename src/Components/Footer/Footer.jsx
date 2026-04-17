@@ -5,7 +5,6 @@ import logo from "../../assets/images/logo.png";
 const Footer = () => {
   const { user } = useContext(AuthContext) || {};
   const currentYear = new Date().getFullYear();
-
   return (
     <footer className="relative mt-14 overflow-hidden border-t border-cyan-100 bg-linear-to-br from-cyan-50 via-sky-50 to-white text-slate-700">
       <div className="pointer-events-none absolute -left-20 top-0 h-52 w-52 rounded-full bg-cyan-200/40 blur-3xl" />

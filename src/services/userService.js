@@ -277,4 +277,4 @@ export const appendBookingHistoryToUser = async (userId, bookingId) => {
   } catch {
     return null;
   }
-};
+}
