@@ -1,4 +1,4 @@
-import React, { useContext } from "react";
+import React, { useContext, useState } from "react";
 import { Link } from "react-router-dom";
 import AuthContext from "../../Contextx/AuthContext/AuthContext";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -6,28 +6,48 @@ import HomeBg from "../../assets/images/Rectangle1.png";
 
 const Login = () => {
   const authInfo = useContext(AuthContext);
-  const { signInUser } = authInfo || {};
+  const { signInUser, resetPassword } = authInfo || {};
   const location = useLocation();
   const navigate = useNavigate();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
   const from = location.state?.from?.pathname || location.state?.from || "/";
 
   const handleLogin = (e) => {
     e.preventDefault();
-    const email = e.target.email.value;
-    const password = e.target.password.value;
 
     signInUser(email, password)
       .then((result) => {
         const user = result.user;
         console.log(user);
         e.target.reset();
+        setEmail("");
+        setPassword("");
         navigate(from, { replace: true });
       })
       .catch((error) => {
         alert(error.message);
       });
   };
+
+  const handleForgotPassword = async (e) => {
+    e.preventDefault();
+
+    const resetEmail = email.trim() || window.prompt("Enter your email address for password reset");
+
+    if (!resetEmail) {
+      return;
+    }
+
+    try {
+      await resetPassword(resetEmail);
+      alert(`Password reset email sent to ${resetEmail}`);
+    } catch (error) {
+      alert(error.message);
+    }
+  };
+
   return (
     <div
       className="hero min-h-screen bg-cover bg-center bg-no-repeat"
@@ -50,6 +70,8 @@ const Login = () => {
                 <input
                   type="email"
                   name="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   className="input input-bordered bg-white/95 text-black"
                   placeholder="Email"
                 />
@@ -57,13 +79,19 @@ const Login = () => {
                 <input
                   type="password"
                   name="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                   className="input input-bordered bg-white/95 text-black"
                   placeholder="Password"
                 />
                 <div>
-                  <a className="link link-hover text-cyan-900">
+                  <button
+                    type="button"
+                    onClick={handleForgotPassword}
+                    className="link link-hover text-left text-cyan-900"
+                  >
                     Forgot password?
-                  </a>
+                  </button>
                 </div>
                 <button className="btn mt-4 border-none bg-cyan-900 text-white hover:bg-cyan-800">
                   Login
