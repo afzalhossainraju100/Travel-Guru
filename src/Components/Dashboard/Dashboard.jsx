@@ -1,8 +1,13 @@
 import React, { useEffect, useMemo, useState } from "react";
 
-const USERS_API_URL = "http://localhost:3000/users";
-const BOOKINGS_API_URL = "http://localhost:3000/bookings";
-const PACKAGES_API_URL = "http://localhost:3000/packages";
+const API_BASE_URL = (
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:3000"
+)
+  .trim()
+  .replace(/\/$/, "");
+const USERS_API_URL = API_BASE_URL ? `${API_BASE_URL}/users` : "";
+const BOOKINGS_API_URL = API_BASE_URL ? `${API_BASE_URL}/bookings` : "";
+const PACKAGES_API_URL = API_BASE_URL ? `${API_BASE_URL}/packages` : "";
 
 const resolveId = (value) => {
   if (typeof value === "string" || typeof value === "number") {
@@ -42,6 +47,15 @@ const Dashboard = () => {
   const loadDashboardData = async () => {
     setLoading(true);
     setError("");
+
+    if (!USERS_API_URL || !BOOKINGS_API_URL || !PACKAGES_API_URL) {
+      setError("Backend API is not configured.");
+      setUsers([]);
+      setBookings([]);
+      setPackages([]);
+      setLoading(false);
+      return;
+    }
 
     try {
       const [usersRes, bookingsRes, packagesRes] = await Promise.all([

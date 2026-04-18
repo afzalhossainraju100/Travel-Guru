@@ -1,8 +1,7 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import "./index.css";
-import { createBrowserRouter } from "react-router";
-import { RouterProvider } from "react-router/dom";
+import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import Roots from "./Layouts/Roots.jsx";
 import Home from "./Components/Home/Home.jsx";
 import Login from "./Components/Login/Login.jsx";
@@ -18,8 +17,13 @@ import Payment from "./Components/Payment/Payment.jsx";
 import Profile from "./Components/Profile/Profile.jsx";
 import Update from "./Components/Update/Update.jsx";
 
-const PACKAGES_API_URL = "http://localhost:3000/packages";
-const BLOGS_API_URL = "http://localhost:3000/blogs";
+const API_BASE_URL = (
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:3000"
+)
+  .trim()
+  .replace(/\/$/, "");
+const PACKAGES_API_URL = API_BASE_URL ? `${API_BASE_URL}/packages` : "";
+const BLOGS_API_URL = API_BASE_URL ? `${API_BASE_URL}/blogs` : "";
 
 const resolvePackageId = (idValue) => {
   if (typeof idValue === "string") return idValue;
@@ -86,6 +90,8 @@ const normalizePackage = (pkg) => ({
 });
 
 const loadPackages = async () => {
+  if (!PACKAGES_API_URL) return [];
+
   try {
     const response = await fetch(PACKAGES_API_URL);
     if (!response.ok) return [];
@@ -103,6 +109,8 @@ const loadPackageById = async ({ params }) => {
 };
 
 const loadBlogs = async () => {
+  if (!BLOGS_API_URL) return [];
+
   try {
     const response = await fetch(BLOGS_API_URL);
     if (!response.ok) return [];
@@ -118,6 +126,11 @@ const router = createBrowserRouter([
   {
     path: "/",
     Component: Roots,
+    hydrateFallbackElement: (
+      <div className="flex min-h-screen items-center justify-center text-slate-700">
+        Loading app...
+      </div>
+    ),
     children: [
       {
         index: true,

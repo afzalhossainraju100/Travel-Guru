@@ -15,7 +15,7 @@ import {
 const Booking = () => {
   const { user } = useContext(AuthContext) || {};
   const navigate = useNavigate();
-  const userIdentifier = user?.email || user?.uid;
+  const userIdentifier = user?.email || "";
   const [viewerRole, setViewerRole] = useState("user");
   const [bookings, setBookings] = useState([]);
   const [wishlist, setWishlist] = useState([]);

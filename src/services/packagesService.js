@@ -1,4 +1,9 @@
-const PACKAGES_API_URL = "http://localhost:3000/packages";
+const API_BASE_URL = (
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:3000"
+)
+  .trim()
+  .replace(/\/$/, "");
+const PACKAGES_API_URL = API_BASE_URL ? `${API_BASE_URL}/packages` : "";
 
 const resolvePackageId = (idValue) => {
   if (typeof idValue === "string") return idValue;
@@ -65,6 +70,10 @@ const normalizePackage = (pkg) => ({
 });
 
 const readPackages = async () => {
+  if (!PACKAGES_API_URL) {
+    return [];
+  }
+
   const response = await fetch(PACKAGES_API_URL);
 
   if (!response.ok) {

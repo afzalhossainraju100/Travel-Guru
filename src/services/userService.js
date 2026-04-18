@@ -1,4 +1,9 @@
-const USERS_API_URL = "http://localhost:3000/users";
+const API_BASE_URL = (
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:3000"
+)
+  .trim()
+  .replace(/\/$/, "");
+const USERS_API_URL = API_BASE_URL ? `${API_BASE_URL}/users` : "";
 
 const resolveUserId = (idValue) => {
   if (typeof idValue === "string" || typeof idValue === "number") {
@@ -29,9 +34,13 @@ const parseJsonSafely = async (response) => {
 };
 
 const requestUsersApi = async (url, options = {}) => {
-  const response = await fetch(url, options);
-  const data = await parseJsonSafely(response);
-  return { response, data };
+  try {
+    const response = await fetch(url, options);
+    const data = await parseJsonSafely(response);
+    return { response, data };
+  } catch {
+    return { response: null, data: null };
+  }
 };
 
 const isMongoWriteResult = (payload) => {
@@ -57,24 +66,30 @@ const isSuccessfulMongoWrite = (payload) => {
 const normalizeUser = (user) => {
   if (!user) return null;
 
+  const { uid, ...restUser } = user;
+
   return {
-    ...user,
-    _id: resolveUserId(user._id || user.id),
-    name: user.name || user.displayName || "",
-    email: user.email || "",
-    phoneNumber: user.phoneNumber || "",
-    address: user.address || "",
-    bookingHistory: Array.isArray(user.bookingHistory)
-      ? user.bookingHistory
+    ...restUser,
+    _id: resolveUserId(restUser._id || restUser.id),
+    name: restUser.name || restUser.displayName || "",
+    email: restUser.email || "",
+    phoneNumber: restUser.phoneNumber || "",
+    address: restUser.address || "",
+    bookingHistory: Array.isArray(restUser.bookingHistory)
+      ? restUser.bookingHistory
       : [],
-    wishlist: Array.isArray(user.wishlist) ? user.wishlist : [],
-    preferences: Array.isArray(user.preferences) ? user.preferences : [],
+    wishlist: Array.isArray(restUser.wishlist) ? restUser.wishlist : [],
+    preferences: Array.isArray(restUser.preferences)
+      ? restUser.preferences
+      : [],
   };
 };
 
 export const getUsers = async () => {
+  if (!USERS_API_URL) return [];
+
   const { response, data } = await requestUsersApi(USERS_API_URL);
-  if (!response.ok || !Array.isArray(data)) return [];
+  if (!response?.ok || !Array.isArray(data)) return [];
 
   return data.map(normalizeUser).filter(Boolean);
 };
@@ -94,12 +109,13 @@ export const fetchUserByEmail = async (email) => {
 
 export const fetchUserById = async (userId) => {
   if (!userId) return null;
+  if (!USERS_API_URL) return null;
 
   const { response, data } = await requestUsersApi(
     `${USERS_API_URL}/${userId}`,
   );
 
-  if (!response.ok || !data) {
+  if (!response?.ok || !data) {
     return null;
   }
 
@@ -123,8 +139,7 @@ export const fetchUserByIdentifier = async (identifier) => {
   const matchedUser = users.find(
     (user) =>
       String(user.email || "").toLowerCase() ===
-        normalizedIdentifier.toLowerCase() ||
-      String(user.uid || "") === normalizedIdentifier,
+      normalizedIdentifier.toLowerCase(),
   );
 
   return normalizeUser(matchedUser);
@@ -132,6 +147,7 @@ export const fetchUserByIdentifier = async (identifier) => {
 
 export const updateUserById = async (userId, updates) => {
   if (!userId || !updates) return null;
+  if (!USERS_API_URL) return null;
 
   const normalizedId = resolveUserId(userId);
   if (!normalizedId) return null;
@@ -147,7 +163,7 @@ export const updateUserById = async (userId, updates) => {
       body: JSON.stringify(updates),
     });
 
-    if (patchResult.response.ok) {
+    if (patchResult.response?.ok) {
       if (isMongoWriteResult(patchResult.data)) {
         if (!isSuccessfulMongoWrite(patchResult.data)) return null;
         return fetchUserById(targetId);
@@ -169,7 +185,7 @@ export const updateUserById = async (userId, updates) => {
       body: JSON.stringify(putPayload),
     });
 
-    if (!putResult.response.ok) return null;
+    if (!putResult.response?.ok) return null;
 
     if (isMongoWriteResult(putResult.data)) {
       if (!isSuccessfulMongoWrite(putResult.data)) return null;
@@ -195,6 +211,7 @@ export const updateUserById = async (userId, updates) => {
 
 export const patchUserById = async (userId, updates) => {
   if (!userId || !updates) return null;
+  if (!USERS_API_URL) return null;
 
   const { response, data } = await requestUsersApi(
     `${USERS_API_URL}/${userId}`,
@@ -207,12 +224,13 @@ export const patchUserById = async (userId, updates) => {
     },
   );
 
-  if (!response.ok) return null;
+  if (!response?.ok) return null;
   return normalizeUser(data) || fetchUserById(userId);
 };
 
 export const putUserById = async (userId, payload) => {
   if (!userId || !payload) return null;
+  if (!USERS_API_URL) return null;
 
   const { response, data } = await requestUsersApi(
     `${USERS_API_URL}/${userId}`,
@@ -225,12 +243,13 @@ export const putUserById = async (userId, payload) => {
     },
   );
 
-  if (!response.ok) return null;
+  if (!response?.ok) return null;
   return normalizeUser(data) || fetchUserById(userId);
 };
 
 export const createUserProfile = async (payload) => {
   if (!payload) return null;
+  if (!USERS_API_URL) return null;
 
   const createPayload = {
     ...payload,
@@ -240,6 +259,7 @@ export const createUserProfile = async (payload) => {
   // Let database generate the unique _id.
   delete createPayload._id;
   delete createPayload.id;
+  delete createPayload.uid;
 
   const { response, data } = await requestUsersApi(USERS_API_URL, {
     method: "POST",
@@ -249,11 +269,62 @@ export const createUserProfile = async (payload) => {
     body: JSON.stringify(createPayload),
   });
 
-  if (!response.ok) {
+  if (!response?.ok) {
     return null;
   }
 
   return normalizeUser(data);
+};
+
+export const upsertGoogleUserProfile = async (googleUser) => {
+  if (!googleUser?.email) return null;
+
+  const googleProfile = {
+    name: googleUser.displayName || "",
+    email: googleUser.email,
+    password: "",
+    phoneNumber: googleUser.phoneNumber || "",
+    address: "",
+    profileImage: googleUser.photoURL || "",
+    role: "user",
+    travelStyle: "",
+    preferences: [],
+    wishlist: [],
+    bookingHistory: [],
+    createdAt: new Date().toISOString(),
+  };
+
+  const existingUser = await fetchUserByEmail(googleUser.email);
+
+  if (!existingUser) {
+    return createUserProfile(googleProfile);
+  }
+
+  const normalizedId = resolveUserId(existingUser._id || existingUser.id);
+
+  if (!normalizedId) {
+    return existingUser;
+  }
+
+  const mergedProfile = {
+    name: googleProfile.name || existingUser.name || "",
+    email: existingUser.email || googleProfile.email,
+    phoneNumber: googleProfile.phoneNumber || existingUser.phoneNumber || "",
+    address: existingUser.address || googleProfile.address,
+    profileImage: googleProfile.profileImage || existingUser.profileImage || "",
+    role: existingUser.role || "user",
+    travelStyle: existingUser.travelStyle || "",
+    preferences: Array.isArray(existingUser.preferences)
+      ? existingUser.preferences
+      : [],
+    wishlist: Array.isArray(existingUser.wishlist) ? existingUser.wishlist : [],
+    bookingHistory: Array.isArray(existingUser.bookingHistory)
+      ? existingUser.bookingHistory
+      : [],
+    createdAt: existingUser.createdAt || googleProfile.createdAt,
+  };
+
+  return updateUserById(normalizedId, mergedProfile) || existingUser;
 };
 
 export const updateUserWishlist = async (userId, wishlist) => {

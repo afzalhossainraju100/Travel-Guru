@@ -1,7 +1,12 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-const PACKAGES_API_URL = "http://localhost:3000/packages";
+const API_BASE_URL = (
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:3000"
+)
+  .trim()
+  .replace(/\/$/, "");
+const PACKAGES_API_URL = API_BASE_URL ? `${API_BASE_URL}/packages` : "";
 
 const resolveId = (value) => {
   if (typeof value === "string" || typeof value === "number") {
@@ -84,6 +89,13 @@ const CreatePackage = ({ isAdmin = false }) => {
   const loadPackages = async () => {
     setLoading(true);
     setError("");
+
+    if (!PACKAGES_API_URL) {
+      setError("Backend API is not configured.");
+      setPackages([]);
+      setLoading(false);
+      return;
+    }
 
     try {
       const response = await fetch(PACKAGES_API_URL);
@@ -180,6 +192,12 @@ const CreatePackage = ({ isAdmin = false }) => {
     setSaving(true);
 
     try {
+      if (!PACKAGES_API_URL) {
+        setError("Backend API is not configured.");
+        setSaving(false);
+        return;
+      }
+
       const payload = buildPayload();
 
       if (!payload.title || !payload.destinationName || !payload.location) {

@@ -16,7 +16,7 @@ const PackageDetails = () => {
   const [wishlistMessage, setWishlistMessage] = useState("");
   const [isWishlisted, setIsWishlisted] = useState(false);
 
-  const userIdentifier = user?.email || user?.uid;
+  const userIdentifier = user?.email || "";
 
   useEffect(() => {
     const loadWishlistState = async () => {

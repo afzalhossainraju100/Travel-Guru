@@ -1,6 +1,11 @@
 import { fetchUserByIdentifier } from "./userService";
 
-const BOOKINGS_API_URL = "http://localhost:3000/bookings";
+const API_BASE_URL = (
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:3000"
+)
+  .trim()
+  .replace(/\/$/, "");
+const BOOKINGS_API_URL = API_BASE_URL ? `${API_BASE_URL}/bookings` : "";
 
 const resolveId = (value) => {
   if (typeof value === "string") return value;
@@ -39,6 +44,10 @@ const normalizeBooking = (booking) => {
 };
 
 const readBookings = async () => {
+  if (!BOOKINGS_API_URL) {
+    return [];
+  }
+
   const response = await fetch(BOOKINGS_API_URL);
 
   if (!response.ok) {
@@ -65,6 +74,9 @@ export const getBookingsByUser = async (userId) => {
 
 export const createBookingForUser = async (bookingData) => {
   if (!bookingData) return null;
+  if (!BOOKINGS_API_URL) {
+    throw new Error("Backend API is not configured.");
+  }
 
   const response = await fetch(BOOKINGS_API_URL, {
     method: "POST",
@@ -102,6 +114,9 @@ export const saveBookingForUser = async (userId, bookingData) => {
 
 export const updateBookingById = async (bookingId, updates) => {
   if (!bookingId || !updates) return null;
+  if (!BOOKINGS_API_URL) {
+    throw new Error("Backend API is not configured.");
+  }
 
   const response = await fetch(`${BOOKINGS_API_URL}/${bookingId}`, {
     method: "PATCH",
@@ -135,6 +150,9 @@ export const removeBookingForUser = async (userIdOrBookingId, bookingId) => {
   const targetBookingId = bookingId || userIdOrBookingId;
 
   if (!targetBookingId) return false;
+  if (!BOOKINGS_API_URL) {
+    throw new Error("Backend API is not configured.");
+  }
 
   const response = await fetch(`${BOOKINGS_API_URL}/${targetBookingId}`, {
     method: "DELETE",
@@ -149,6 +167,7 @@ export const removeBookingForUser = async (userIdOrBookingId, bookingId) => {
 
 export const getBookingById = async (bookingId) => {
   if (!bookingId) return null;
+  if (!BOOKINGS_API_URL) return null;
 
   const response = await fetch(`${BOOKINGS_API_URL}/${bookingId}`);
 

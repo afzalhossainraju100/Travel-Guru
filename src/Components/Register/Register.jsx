@@ -2,15 +2,27 @@ import React, { useContext, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import AuthContext from "../../Contextx/AuthContext/AuthContext";
 import HomeBg from "../../assets/images/Rectangle1.png";
-import { createUserProfile } from "../../services/userService";
+import {
+  createUserProfile,
+  upsertGoogleUserProfile,
+} from "../../services/userService";
 // import { createUserWithEmailAndPassword } from "firebase/auth";
 // import { auth } from '../../Firebase/Firebase.init';
 
 const Register = () => {
-  const { createUser } = useContext(AuthContext);
+  const { createUser, signInWithGoogle } = useContext(AuthContext);
   const navigate = useNavigate();
   const [submitError, setSubmitError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [googleSubmitting, setGoogleSubmitting] = useState(false);
+
+  const getGoogleAuthErrorMessage = (error) => {
+    if (error?.code === "auth/operation-not-allowed") {
+      return "Google sign-in is disabled in Firebase. Enable Google provider in the Firebase Console, then try again.";
+    }
+
+    return error?.message || "Google sign-in failed.";
+  };
 
   const handleRegister = async (e) => {
     e.preventDefault();
@@ -57,6 +69,28 @@ const Register = () => {
       setSubmitError(error?.message || "Registration failed.");
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    setSubmitError("");
+    setGoogleSubmitting(true);
+
+    try {
+      const result = await signInWithGoogle();
+      const savedProfile = await upsertGoogleUserProfile(result?.user);
+
+      if (!savedProfile) {
+        throw new Error(
+          "Google sign-up worked, but user profile could not be saved to the database.",
+        );
+      }
+
+      navigate("/profile", { replace: true });
+    } catch (error) {
+      setSubmitError(getGoogleAuthErrorMessage(error));
+    } finally {
+      setGoogleSubmitting(false);
     }
   };
   // const handleRegister = (e) =>{
@@ -109,16 +143,19 @@ const Register = () => {
                   minLength={6}
                   required
                 />
-                <div>
-                  <a className="link link-hover text-cyan-900">
-                    Forgot password?
-                  </a>
-                </div>
                 <button
                   disabled={submitting}
                   className="btn mt-4 border-none bg-cyan-900 text-white hover:bg-cyan-800 disabled:opacity-60"
                 >
                   {submitting ? "Signing up..." : "Register"}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleGoogleSignIn}
+                  disabled={googleSubmitting}
+                  className="btn mt-2 border border-slate-300 bg-white text-slate-800 hover:bg-slate-100 disabled:opacity-60"
+                >
+                  {googleSubmitting ? "Signing up..." : "Sign Up with Google"}
                 </button>
               </fieldset>
             </form>

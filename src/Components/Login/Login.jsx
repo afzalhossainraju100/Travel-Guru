@@ -3,38 +3,47 @@ import { Link } from "react-router-dom";
 import AuthContext from "../../Contextx/AuthContext/AuthContext";
 import { useLocation, useNavigate } from "react-router-dom";
 import HomeBg from "../../assets/images/Rectangle1.png";
+import { upsertGoogleUserProfile } from "../../services/userService";
 
 const Login = () => {
   const authInfo = useContext(AuthContext);
-  const { signInUser, resetPassword } = authInfo || {};
+  const { signInUser, resetPassword, signInWithGoogle } = authInfo || {};
   const location = useLocation();
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [googleLoading, setGoogleLoading] = useState(false);
+
+  const getGoogleAuthErrorMessage = (error) => {
+    if (error?.code === "auth/operation-not-allowed") {
+      return "Google sign-in is disabled in Firebase. Enable Google provider in the Firebase Console, then try again.";
+    }
+
+    return error?.message || "Google sign-in failed.";
+  };
 
   const from = location.state?.from?.pathname || location.state?.from || "/";
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
 
-    signInUser(email, password)
-      .then((result) => {
-        const user = result.user;
-        console.log(user);
-        e.target.reset();
-        setEmail("");
-        setPassword("");
-        navigate(from, { replace: true });
-      })
-      .catch((error) => {
-        alert(error.message);
-      });
+    try {
+      await signInUser(email, password);
+      e.target.reset();
+      setEmail("");
+      setPassword("");
+      navigate(from, { replace: true });
+    } catch (error) {
+      alert(error.message);
+    }
   };
 
   const handleForgotPassword = async (e) => {
     e.preventDefault();
 
-    const resetEmail = email.trim() || window.prompt("Enter your email address for password reset");
+    const resetEmail =
+      email.trim() ||
+      window.prompt("Enter your email address for password reset");
 
     if (!resetEmail) {
       return;
@@ -45,6 +54,27 @@ const Login = () => {
       alert(`Password reset email sent to ${resetEmail}`);
     } catch (error) {
       alert(error.message);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    setGoogleLoading(true);
+
+    try {
+      const result = await signInWithGoogle();
+
+      const savedProfile = await upsertGoogleUserProfile(result.user);
+      if (!savedProfile) {
+        alert(
+          "Google sign-in worked, but user profile could not be saved to the database.",
+        );
+      }
+
+      navigate(from, { replace: true });
+    } catch (error) {
+      alert(getGoogleAuthErrorMessage(error));
+    } finally {
+      setGoogleLoading(false);
     }
   };
 
@@ -95,6 +125,14 @@ const Login = () => {
                 </div>
                 <button className="btn mt-4 border-none bg-cyan-900 text-white hover:bg-cyan-800">
                   Login
+                </button>
+                <button
+                  type="button"
+                  onClick={handleGoogleLogin}
+                  disabled={googleLoading}
+                  className="btn mt-2 border border-slate-300 bg-white text-slate-800 hover:bg-slate-100 disabled:opacity-60"
+                >
+                  {googleLoading ? "Signing in..." : "Sign in with Google"}
                 </button>
               </fieldset>
             </form>
