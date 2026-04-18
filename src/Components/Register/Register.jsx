@@ -6,6 +6,7 @@ import {
   createUserProfile,
   upsertGoogleUserProfile,
 } from "../../services/userService";
+import { FaGoogle } from "react-icons/fa6";
 // import { createUserWithEmailAndPassword } from "firebase/auth";
 // import { auth } from '../../Firebase/Firebase.init';
 
@@ -153,8 +154,9 @@ const Register = () => {
                   type="button"
                   onClick={handleGoogleSignIn}
                   disabled={googleSubmitting}
-                  className="btn mt-2 border border-slate-300 bg-white text-slate-800 hover:bg-slate-100 disabled:opacity-60"
+                  className="btn mt-2 border-none bg-orange-500 text-white hover:bg-orange-600 disabled:opacity-60"
                 >
+                  <FaGoogle className="mr-2" />
                   {googleSubmitting ? "Signing up..." : "Sign Up with Google"}
                 </button>
               </fieldset>

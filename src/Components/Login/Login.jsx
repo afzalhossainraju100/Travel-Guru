@@ -4,6 +4,7 @@ import AuthContext from "../../Contextx/AuthContext/AuthContext";
 import { useLocation, useNavigate } from "react-router-dom";
 import HomeBg from "../../assets/images/Rectangle1.png";
 import { upsertGoogleUserProfile } from "../../services/userService";
+import { FaGoogle } from "react-icons/fa6";
 
 const Login = () => {
   const authInfo = useContext(AuthContext);
@@ -130,8 +131,9 @@ const Login = () => {
                   type="button"
                   onClick={handleGoogleLogin}
                   disabled={googleLoading}
-                  className="btn mt-2 border border-slate-300 bg-white text-slate-800 hover:bg-slate-100 disabled:opacity-60"
+                  className="btn mt-2 border-none bg-orange-500 text-white hover:bg-orange-600 disabled:opacity-60"
                 >
+                  <FaGoogle className="mr-2" />
                   {googleLoading ? "Signing in..." : "Sign in with Google"}
                 </button>
               </fieldset>
