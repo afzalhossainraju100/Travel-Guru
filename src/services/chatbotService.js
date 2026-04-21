@@ -1,5 +1,10 @@
 import { getAllPackages } from "./packagesService";
 
+const OPENAI_API_KEY = (import.meta.env.VITE_OPENAI_API_KEY || "").trim();
+const OPENAI_MODEL = (
+  import.meta.env.VITE_OPENAI_MODEL || "gpt-4.1-mini"
+).trim();
+
 const moneyFormatter = new Intl.NumberFormat("en-BD", {
   style: "currency",
   currency: "BDT",
@@ -46,14 +51,76 @@ const packageSummary = (pkg) => {
   return `${pkg.title} in ${pkg.location} costs ${moneyFormatter.format(pkg.priceBdt)} for ${pkg.duration}. Tour dates: ${dateFormatter.format(new Date(pkg.startDate))} to ${dateFormatter.format(new Date(pkg.endDate))}. You will visit: ${spots}.`;
 };
 
-export const getChatbotReply = async (rawInput) => {
-  const input = rawInput?.trim();
+const buildPackagesContext = (packagesData = []) =>
+  packagesData
+    .map((pkg, index) => {
+      const spots = Array.isArray(pkg.spots) ? pkg.spots.join(", ") : "N/A";
+      const features = Array.isArray(pkg.features)
+        ? pkg.features.join(", ")
+        : "N/A";
 
-  if (!input) {
-    return "Please type your question. You can ask about package price, dates, duration, spots, or recommendations.";
+      return `${index + 1}. ${pkg.title}\nLocation: ${pkg.location}\nPrice: ${moneyFormatter.format(pkg.priceBdt)}\nDuration: ${pkg.duration}\nStart: ${pkg.startDate}\nEnd: ${pkg.endDate}\nSpots: ${spots}\nFeatures: ${features}`;
+    })
+    .join("\n\n");
+
+const askOpenAI = async (userInput, packagesData) => {
+  if (!OPENAI_API_KEY) {
+    return null;
   }
 
-  const packagesData = await getAllPackages();
+  const packagesContext = buildPackagesContext(packagesData);
+
+  const response = await fetch("https://api.openai.com/v1/responses", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${OPENAI_API_KEY}`,
+    },
+    body: JSON.stringify({
+      model: OPENAI_MODEL,
+      temperature: 0.4,
+      max_output_tokens: 260,
+      input: [
+        {
+          role: "system",
+          content: [
+            {
+              type: "input_text",
+              text: "You are Travel Guru assistant. Answer user travel package questions clearly and briefly. Prioritize package data provided below. If data is missing, say so politely.",
+            },
+          ],
+        },
+        {
+          role: "user",
+          content: [
+            {
+              type: "input_text",
+              text: `User Question:\n${userInput}\n\nAvailable Packages:\n${packagesContext}`,
+            },
+          ],
+        },
+      ],
+    }),
+  });
+
+  if (!response.ok) {
+    return null;
+  }
+
+  const data = await response.json();
+
+  if (typeof data?.output_text === "string" && data.output_text.trim()) {
+    return data.output_text.trim();
+  }
+
+  const text = data?.output
+    ?.flatMap((item) => item?.content || [])
+    ?.find((content) => content?.type === "output_text")?.text;
+
+  return typeof text === "string" && text.trim() ? text.trim() : null;
+};
+
+const getFallbackReply = (input, packagesData) => {
   const query = normalize(input);
   const selectedPackage = findPackageFromQuery(query, packagesData);
 
@@ -161,4 +228,25 @@ export const getChatbotReply = async (rawInput) => {
   }
 
   return "I can help with package price, duration, start/end dates, included features, and visit spots. Try asking: 'price of Sajek package' or 'which package is best for beach trip?'";
+};
+
+export const getChatbotReply = async (rawInput) => {
+  const input = rawInput?.trim();
+
+  if (!input) {
+    return "Please type your question. You can ask about package price, dates, duration, spots, or recommendations.";
+  }
+
+  const packagesData = await getAllPackages();
+
+  try {
+    const aiReply = await askOpenAI(input, packagesData);
+    if (aiReply) {
+      return aiReply;
+    }
+  } catch {
+    // Fall back to local logic if API call fails.
+  }
+
+  return getFallbackReply(input, packagesData);
 };
