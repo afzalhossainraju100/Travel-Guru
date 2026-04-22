@@ -19,6 +19,7 @@ const PackageDetails = () => {
 
   //console.log('token',user.accessToken)
 
+
   useEffect(() => {
     const loadWishlistState = async () => {
       const saved = await isPackageWishlisted(userIdentifier, id);
