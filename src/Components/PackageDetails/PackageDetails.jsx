@@ -15,8 +15,9 @@ const PackageDetails = () => {
   const [bookingMessage, setBookingMessage] = useState("");
   const [wishlistMessage, setWishlistMessage] = useState("");
   const [isWishlisted, setIsWishlisted] = useState(false);
-
   const userIdentifier = user?.email || "";
+
+  //console.log('token',user.accessToken)
 
   useEffect(() => {
     const loadWishlistState = async () => {
