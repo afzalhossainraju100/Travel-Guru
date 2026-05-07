@@ -18,7 +18,8 @@ import Profile from "./Components/Profile/Profile.jsx";
 import Update from "./Components/Update/Update.jsx";
 
 const API_BASE_URL = (
-  import.meta.env.VITE_API_BASE_URL || "http://localhost:3000"
+  import.meta.env.VITE_API_BASE_URL ||
+  "https://travel-guru-server-seven.vercel.app"
 )
   .trim()
   .replace(/\/$/, "");

@@ -40,3 +40,6 @@ serviceAccountKey*.json
 
 # Keep only the template env file in Git
 !.env.example
+
+.vercel
+.env*.local

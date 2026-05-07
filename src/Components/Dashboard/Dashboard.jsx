@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useState } from "react";
 
 const API_BASE_URL = (
-  import.meta.env.VITE_API_BASE_URL || "http://localhost:3000"
+  import.meta.env.VITE_API_BASE_URL ||
+  "https://travel-guru-server-seven.vercel.app"
 )
   .trim()
   .replace(/\/$/, "");
@@ -35,6 +36,170 @@ const formatMoney = (amount) => {
     currency: "BDT",
     maximumFractionDigits: 0,
   }).format(toNumber(amount));
+};
+
+const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
+
+const buildSparklinePoints = (
+  values,
+  width = 220,
+  height = 72,
+  padding = 10,
+) => {
+  if (!values.length) return "";
+
+  const maxValue = Math.max(...values, 1);
+  const minValue = Math.min(...values, 0);
+  const xStep =
+    values.length > 1 ? (width - padding * 2) / (values.length - 1) : 0;
+
+  return values
+    .map((value, index) => {
+      const normalized =
+        maxValue === minValue
+          ? 0.5
+          : (value - minValue) / (maxValue - minValue);
+      const x = padding + xStep * index;
+      const y = height - padding - normalized * (height - padding * 2);
+      return `${x},${y}`;
+    })
+    .join(" ");
+};
+
+const MetricCard = ({ title, value, accentClass, subtitle, children }) => {
+  return (
+    <div className={`rounded-2xl border bg-white p-4 shadow-sm ${accentClass}`}>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500">
+            {title}
+          </p>
+          <p className="mt-2 text-2xl font-black text-slate-950">{value}</p>
+          {subtitle ? (
+            <p className="mt-1 text-xs text-slate-500">{subtitle}</p>
+          ) : null}
+        </div>
+        <div className="shrink-0">{children}</div>
+      </div>
+    </div>
+  );
+};
+
+const RingChart = ({
+  value,
+  color = "#0ea5e9",
+  label,
+  size = 88,
+  strokeWidth = 10,
+}) => {
+  const radius = (size - strokeWidth) / 2;
+  const center = size / 2;
+  const circumference = 2 * Math.PI * radius;
+  const progress = clamp(value, 0, 100);
+  const dashOffset = circumference - (progress / 100) * circumference;
+
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox={`0 0 ${size} ${size}`}
+      aria-label={label}
+    >
+      <circle
+        cx={center}
+        cy={center}
+        r={radius}
+        stroke="rgba(148, 163, 184, 0.18)"
+        strokeWidth={strokeWidth}
+        fill="none"
+      />
+      <circle
+        cx={center}
+        cy={center}
+        r={radius}
+        stroke={color}
+        strokeWidth={strokeWidth}
+        fill="none"
+        strokeLinecap="round"
+        strokeDasharray={circumference}
+        strokeDashoffset={dashOffset}
+        transform={`rotate(-90 ${center} ${center})`}
+      />
+      <text
+        x="50%"
+        y="48%"
+        dominantBaseline="middle"
+        textAnchor="middle"
+        className="fill-slate-950 text-[15px] font-black"
+      >
+        {Math.round(progress)}%
+      </text>
+      <text
+        x="50%"
+        y="66%"
+        dominantBaseline="middle"
+        textAnchor="middle"
+        className="fill-slate-500 text-[9px] font-semibold uppercase tracking-[0.2em]"
+      >
+        {label}
+      </text>
+    </svg>
+  );
+};
+
+const SparklineChart = ({
+  values,
+  stroke = "#2563eb",
+  fill = "rgba(37, 99, 235, 0.14)",
+}) => {
+  const points = buildSparklinePoints(values);
+
+  if (!points) {
+    return null;
+  }
+
+  const areaPoints = `10,62 ${points} 210,62`;
+
+  return (
+    <svg viewBox="0 0 220 72" className="h-18 w-full" aria-hidden="true">
+      <polyline points={areaPoints} fill={fill} stroke="none" />
+      <polyline
+        points={points}
+        fill="none"
+        stroke={stroke}
+        strokeWidth="2.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+};
+
+const HorizontalBars = ({ bars }) => {
+  const maxValue = Math.max(...bars.map((bar) => bar.value), 1);
+
+  return (
+    <div className="space-y-3">
+      {bars.map((bar) => {
+        const width = clamp((bar.value / maxValue) * 100, 6, 100);
+
+        return (
+          <div key={bar.label}>
+            <div className="mb-1 flex items-center justify-between gap-3 text-xs font-semibold text-slate-600">
+              <span>{bar.label}</span>
+              <span>{bar.displayValue}</span>
+            </div>
+            <div className="h-3 rounded-full bg-slate-100">
+              <div
+                className="h-3 rounded-full"
+                style={{ width: `${width}%`, background: bar.color }}
+              />
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
 };
 
 const Dashboard = () => {
@@ -191,154 +356,375 @@ const Dashboard = () => {
     };
   }, [bookings, packages, users]);
 
+  const revenueTrendValues = useMemo(
+    () => analytics.topPackages.map((pkg) => toNumber(pkg.paidRevenue)),
+    [analytics.topPackages],
+  );
+
+  const packageBars = useMemo(
+    () =>
+      analytics.topPackages.map((pkg, index) => ({
+        label: pkg.name,
+        value: toNumber(pkg.paidRevenue),
+        displayValue: formatMoney(pkg.paidRevenue),
+        color: ["#0f766e", "#2563eb", "#7c3aed", "#f59e0b", "#ec4899"][
+          index % 5
+        ],
+      })),
+    [analytics.topPackages],
+  );
+
+  const totalBookingMix = useMemo(
+    () => [analytics.paidBookings, analytics.unpaidBookings],
+    [analytics.paidBookings, analytics.unpaidBookings],
+  );
+
+  const countScale = Math.max(
+    analytics.totalUsers,
+    analytics.totalBookings,
+    analytics.paidBookings,
+    analytics.unpaidBookings,
+    1,
+  );
+  const moneyScale = Math.max(
+    analytics.totalRevenue,
+    analytics.avgBookingValue,
+    ...analytics.topPackages.map((pkg) => toNumber(pkg.paidRevenue)),
+    1,
+  );
+
+  const userProgress = clamp((analytics.totalUsers / countScale) * 100, 8, 100);
+  const bookingProgress = clamp(
+    (analytics.totalBookings / countScale) * 100,
+    8,
+    100,
+  );
+  const paidProgress = analytics.totalBookings
+    ? clamp((analytics.paidBookings / analytics.totalBookings) * 100, 0, 100)
+    : 0;
+  const revenueProgress = clamp(
+    (analytics.totalRevenue / moneyScale) * 100,
+    8,
+    100,
+  );
+  const avgValueProgress = clamp(
+    (analytics.avgBookingValue / moneyScale) * 100,
+    8,
+    100,
+  );
+  const bookingsPerUserProgress = clamp(
+    (analytics.bookingsPerUser / 3) * 100,
+    8,
+    100,
+  );
+  const completionProgress = analytics.paymentCompletionRate;
+
   return (
-    <section className="mt-6 rounded-3xl border border-slate-200 bg-white/95 p-6 shadow-xl backdrop-blur-sm sm:p-8">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h2 className="text-2xl font-black text-slate-900">
-            Business Analytics Dashboard
-          </h2>
-          <p className="mt-1 text-sm text-slate-600">
-            Data-driven insights from users, bookings, and packages for better
-            revenue decisions.
-          </p>
+    <section className="mt-6 overflow-hidden rounded-3xl border border-slate-200 bg-white/95 shadow-2xl backdrop-blur-sm">
+      <div className="border-b border-slate-200 bg-[radial-gradient(circle_at_top_left,_rgba(14,165,233,0.12),_transparent_42%),linear-gradient(135deg,_rgba(255,255,255,0.95),_rgba(248,250,252,0.95))] px-6 py-6 sm:px-8">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.3em] text-cyan-700">
+              AI Business Intelligence
+            </p>
+            <h2 className="mt-2 text-2xl font-black text-slate-950 sm:text-3xl">
+              Business Analytics Dashboard
+            </h2>
+            <p className="mt-2 max-w-2xl text-sm text-slate-600 sm:text-base">
+              Data-driven insights from users, bookings, and packages for better
+              revenue decisions.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={loadDashboardData}
+            className="inline-flex w-fit items-center rounded-lg border border-cyan-200 bg-cyan-50 px-4 py-2 text-sm font-semibold text-cyan-800 transition hover:bg-cyan-100"
+          >
+            Refresh
+          </button>
         </div>
-        <button
-          type="button"
-          onClick={loadDashboardData}
-          className="inline-flex w-fit items-center rounded-lg border border-cyan-200 bg-cyan-50 px-4 py-2 text-sm font-semibold text-cyan-800 transition hover:bg-cyan-100"
-        >
-          Refresh
-        </button>
+      </div>
+
+      <div className="grid gap-3 border-t border-slate-100 bg-slate-50/60 px-6 py-4 sm:grid-cols-2 xl:grid-cols-4 sm:px-8">
+        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+          <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500">
+            Coverage
+          </p>
+          <p className="mt-2 text-lg font-black text-slate-950">
+            {analytics.totalUsers} users · {analytics.totalBookings} bookings
+          </p>
+          <p className="mt-1 text-xs text-slate-500">Live database snapshot</p>
+        </div>
+        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+          <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500">
+            Revenue Engine
+          </p>
+          <p className="mt-2 text-lg font-black text-slate-950">
+            {formatMoney(analytics.totalRevenue)}
+          </p>
+          <p className="mt-1 text-xs text-slate-500">Paid booking revenue</p>
+        </div>
+        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+          <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500">
+            Payment Completion
+          </p>
+          <p className="mt-2 text-lg font-black text-slate-950">
+            {analytics.paymentCompletionRate.toFixed(1)}%
+          </p>
+          <p className="mt-1 text-xs text-slate-500">Paid vs unpaid bookings</p>
+        </div>
+        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+          <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500">
+            Recommendation Score
+          </p>
+          <p className="mt-2 text-lg font-black text-slate-950">
+            {analytics.recommendations.length} actions
+          </p>
+          <p className="mt-1 text-xs text-slate-500">Decision support queue</p>
+        </div>
       </div>
 
       {loading ? (
-        <p className="mt-5 text-sm text-slate-600">Loading analytics...</p>
+        <p className="px-6 py-5 text-sm text-slate-600 sm:px-8">
+          Loading analytics...
+        </p>
       ) : null}
 
       {error ? (
-        <p className="mt-5 rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">
+        <p className="mx-6 mt-5 rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700 sm:mx-8">
           {error}
         </p>
       ) : null}
 
       {!loading && !error ? (
-        <>
-          <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-              <p className="text-xs font-semibold text-slate-500 uppercase">
-                Total Users
-              </p>
-              <p className="mt-1 text-2xl font-black text-slate-900">
-                {analytics.totalUsers}
-              </p>
-            </div>
-            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-              <p className="text-xs font-semibold text-slate-500 uppercase">
-                Total Bookings
-              </p>
-              <p className="mt-1 text-2xl font-black text-slate-900">
-                {analytics.totalBookings}
-              </p>
-            </div>
-            <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4">
-              <p className="text-xs font-semibold text-emerald-700 uppercase">
-                Paid Bookings
-              </p>
-              <p className="mt-1 text-2xl font-black text-emerald-900">
-                {analytics.paidBookings}
-              </p>
-            </div>
-            <div className="rounded-xl border border-cyan-200 bg-cyan-50 p-4">
-              <p className="text-xs font-semibold text-cyan-700 uppercase">
-                Unpaid Bookings
-              </p>
-              <p className="mt-1 text-2xl font-black text-cyan-900">
-                {analytics.unpaidBookings}
-              </p>
-            </div>
-          </div>
+        <div className="space-y-6 px-6 py-6 sm:px-8">
+          <div className="grid gap-4 xl:grid-cols-12">
+            <div className="xl:col-span-8">
+              <div className="rounded-3xl border border-slate-200 bg-[linear-gradient(180deg,rgba(248,250,252,0.9),rgba(255,255,255,1))] p-5 shadow-sm">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <h3 className="text-sm font-bold tracking-[0.22em] text-slate-500 uppercase">
+                      KPI Control Panel
+                    </h3>
+                    <p className="mt-2 text-lg font-black text-slate-950">
+                      Graphical view of the key business signals
+                    </p>
+                  </div>
+                  <div className="rounded-full border border-cyan-200 bg-cyan-50 px-3 py-1 text-xs font-semibold text-cyan-800">
+                    Live analysis
+                  </div>
+                </div>
 
-          <div className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            <div className="rounded-xl border border-indigo-200 bg-indigo-50 p-4">
-              <p className="text-xs font-semibold text-indigo-700 uppercase">
-                Total Revenue
-              </p>
-              <p className="mt-1 text-xl font-black text-indigo-900">
-                {formatMoney(analytics.totalRevenue)}
-              </p>
-            </div>
-            <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
-              <p className="text-xs font-semibold text-amber-700 uppercase">
-                Avg Booking Value
-              </p>
-              <p className="mt-1 text-xl font-black text-amber-900">
-                {formatMoney(analytics.avgBookingValue)}
-              </p>
-            </div>
-            <div className="rounded-xl border border-sky-200 bg-sky-50 p-4">
-              <p className="text-xs font-semibold text-sky-700 uppercase">
-                Bookings Per User
-              </p>
-              <p className="mt-1 text-xl font-black text-sky-900">
-                {analytics.bookingsPerUser.toFixed(2)}
-              </p>
-            </div>
-            <div className="rounded-xl border border-violet-200 bg-violet-50 p-4">
-              <p className="text-xs font-semibold text-violet-700 uppercase">
-                Payment Completion
-              </p>
-              <p className="mt-1 text-xl font-black text-violet-900">
-                {analytics.paymentCompletionRate.toFixed(1)}%
-              </p>
-            </div>
-          </div>
+                <div className="mt-5 grid gap-4 md:grid-cols-2">
+                  <MetricCard
+                    title="Total Users"
+                    value={analytics.totalUsers}
+                    subtitle="Current registered audience"
+                    accentClass="border-slate-200"
+                  >
+                    <RingChart
+                      value={userProgress}
+                      color="#0f172a"
+                      label="Users"
+                    />
+                  </MetricCard>
 
-          <div className="mt-6 grid gap-4 lg:grid-cols-2">
-            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-              <h3 className="text-sm font-bold tracking-wide text-slate-800 uppercase">
-                Top Performing Packages
-              </h3>
-              {analytics.topPackages.length ? (
-                <div className="mt-3 space-y-3">
-                  {analytics.topPackages.map((pkg, index) => (
-                    <div
-                      key={`${pkg.name}-${index}`}
-                      className="flex items-center justify-between rounded-lg border border-slate-200 bg-white p-3"
-                    >
-                      <div>
-                        <p className="text-sm font-semibold text-slate-900">
-                          {pkg.name}
-                        </p>
-                        <p className="text-xs text-slate-500">
-                          Bookings: {pkg.bookings}
-                        </p>
+                  <MetricCard
+                    title="Total Bookings"
+                    value={analytics.totalBookings}
+                    subtitle="All booking requests"
+                    accentClass="border-sky-200"
+                  >
+                    <div className="flex w-28 flex-col items-end gap-2">
+                      <SparklineChart
+                        values={totalBookingMix}
+                        stroke="#0284c7"
+                        fill="rgba(2, 132, 199, 0.16)"
+                      />
+                      <div className="h-2 w-full rounded-full bg-slate-100">
+                        <div
+                          className="h-2 rounded-full bg-sky-500"
+                          style={{ width: `${bookingProgress}%` }}
+                        />
                       </div>
-                      <p className="text-sm font-bold text-emerald-700">
-                        {formatMoney(pkg.paidRevenue)}
-                      </p>
                     </div>
-                  ))}
+                  </MetricCard>
+
+                  <MetricCard
+                    title="Paid Bookings"
+                    value={analytics.paidBookings}
+                    subtitle={`${analytics.unpaidBookings} waiting for payment`}
+                    accentClass="border-emerald-200"
+                  >
+                    <RingChart
+                      value={paidProgress}
+                      color="#10b981"
+                      label="Paid"
+                    />
+                  </MetricCard>
+
+                  <MetricCard
+                    title="Total Revenue"
+                    value={formatMoney(analytics.totalRevenue)}
+                    subtitle="Collected from paid bookings"
+                    accentClass="border-indigo-200"
+                  >
+                    <div className="flex w-28 flex-col items-end gap-2">
+                      <SparklineChart
+                        values={
+                          revenueTrendValues.length
+                            ? revenueTrendValues
+                            : [0, 0, 0]
+                        }
+                        stroke="#4f46e5"
+                        fill="rgba(79, 70, 229, 0.16)"
+                      />
+                      <div className="h-2 w-full rounded-full bg-slate-100">
+                        <div
+                          className="h-2 rounded-full bg-indigo-500"
+                          style={{ width: `${revenueProgress}%` }}
+                        />
+                      </div>
+                    </div>
+                  </MetricCard>
+
+                  <MetricCard
+                    title="Avg Booking Value"
+                    value={formatMoney(analytics.avgBookingValue)}
+                    subtitle="Mean value per paid booking"
+                    accentClass="border-amber-200"
+                  >
+                    <RingChart
+                      value={avgValueProgress}
+                      color="#f59e0b"
+                      label="Avg"
+                    />
+                  </MetricCard>
+
+                  <MetricCard
+                    title="Bookings Per User"
+                    value={analytics.bookingsPerUser.toFixed(2)}
+                    subtitle="Engagement density"
+                    accentClass="border-cyan-200"
+                  >
+                    <RingChart
+                      value={bookingsPerUserProgress}
+                      color="#06b6d4"
+                      label="Density"
+                    />
+                  </MetricCard>
+                </div>
+              </div>
+            </div>
+
+            <div className="xl:col-span-4">
+              <div className="h-full rounded-3xl border border-cyan-100 bg-gradient-to-b from-cyan-50 to-white p-5 shadow-sm">
+                <h3 className="text-sm font-bold tracking-[0.22em] text-cyan-900 uppercase">
+                  Payment Completion
+                </h3>
+                <p className="mt-2 text-lg font-black text-slate-950">
+                  {analytics.paymentCompletionRate.toFixed(1)}%
+                </p>
+                <p className="mt-1 text-sm text-slate-600">
+                  Share of bookings that have been paid.
+                </p>
+
+                <div className="mt-4 flex items-center gap-4">
+                  <RingChart
+                    value={completionProgress}
+                    color="#06b6d4"
+                    label="Complete"
+                    size={118}
+                    strokeWidth={12}
+                  />
+                  <div className="flex-1 space-y-3">
+                    <div>
+                      <div className="mb-1 flex items-center justify-between text-xs font-semibold text-slate-600">
+                        <span>Paid</span>
+                        <span>{analytics.paidBookings}</span>
+                      </div>
+                      <div className="h-3 rounded-full bg-emerald-100">
+                        <div
+                          className="h-3 rounded-full bg-emerald-500"
+                          style={{ width: `${completionProgress}%` }}
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <div className="mb-1 flex items-center justify-between text-xs font-semibold text-slate-600">
+                        <span>Unpaid</span>
+                        <span>{analytics.unpaidBookings}</span>
+                      </div>
+                      <div className="h-3 rounded-full bg-sky-100">
+                        <div
+                          className="h-3 rounded-full bg-sky-500"
+                          style={{
+                            width: `${analytics.totalBookings ? 100 - completionProgress : 0}%`,
+                          }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-5 rounded-2xl border border-slate-200 bg-white p-4">
+                  <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-500">
+                    AI Readout
+                  </p>
+                  <ul className="mt-3 space-y-2 text-sm text-slate-700">
+                    {analytics.recommendations.map((item, index) => (
+                      <li key={`rec-${index}`} className="flex gap-2">
+                        <span className="mt-1 h-2 w-2 rounded-full bg-cyan-500" />
+                        <span>{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid gap-4 lg:grid-cols-2">
+            <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5 shadow-sm">
+              <div className="flex items-center justify-between gap-4">
+                <h3 className="text-sm font-bold tracking-[0.22em] text-slate-500 uppercase">
+                  Top Performing Packages
+                </h3>
+                <span className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-600">
+                  Revenue ranking
+                </span>
+              </div>
+              {packageBars.length ? (
+                <div className="mt-5 space-y-4">
+                  <HorizontalBars bars={packageBars} />
                 </div>
               ) : (
-                <p className="mt-3 text-sm text-slate-600">
+                <p className="mt-4 text-sm text-slate-600">
                   No booking/package data available yet.
                 </p>
               )}
             </div>
 
-            <div className="rounded-xl border border-cyan-100 bg-cyan-50 p-4">
-              <h3 className="text-sm font-bold tracking-wide text-cyan-900 uppercase">
+            <div className="rounded-3xl border border-cyan-100 bg-cyan-50 p-5 shadow-sm">
+              <h3 className="text-sm font-bold tracking-[0.22em] text-cyan-900 uppercase">
                 Decision Support
               </h3>
-              <ul className="mt-3 list-disc space-y-2 pl-5 text-sm text-slate-700">
+              <div className="mt-4 grid gap-3">
                 {analytics.recommendations.map((item, index) => (
-                  <li key={`rec-${index}`}>{item}</li>
+                  <div
+                    key={`decision-${index}`}
+                    className="rounded-2xl border border-cyan-100 bg-white p-4 text-sm text-slate-700 shadow-sm"
+                  >
+                    <span className="mr-2 inline-flex h-6 w-6 items-center justify-center rounded-full bg-cyan-100 text-xs font-black text-cyan-800">
+                      {index + 1}
+                    </span>
+                    {item}
+                  </div>
                 ))}
-              </ul>
+              </div>
             </div>
           </div>
-        </>
+        </div>
       ) : null}
     </section>
   );
