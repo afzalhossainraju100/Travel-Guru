@@ -17,7 +17,7 @@ const PackageDetails = () => {
   const [isWishlisted, setIsWishlisted] = useState(false);
   const userIdentifier = user?.email || "";
 
-  //console.log('token',user.accessToken)
+  console.log('token',user.accessToken)
 
 
   useEffect(() => {
